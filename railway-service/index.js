@@ -218,43 +218,68 @@ async function connectWhatsApp(device) {
 
     activeSockets.set(device.id, sock);
 
+    // Handle pairing code BEFORE connection.update events
+    if (!sock.authState.creds.registered) {
+      console.log('🔐 Device not registered, checking connection method...');
+      
+      // Check if device wants pairing code
+      const { data: deviceData } = await supabase
+        .from('devices')
+        .select('connection_method, phone_for_pairing')
+        .eq('id', device.id)
+        .single();
+
+      if (deviceData?.connection_method === 'pairing' && deviceData?.phone_for_pairing) {
+        console.log('📱 Requesting pairing code for:', deviceData.phone_for_pairing);
+        
+        try {
+          const pairingCode = await sock.requestPairingCode(deviceData.phone_for_pairing);
+          console.log('✅ Pairing code generated:', pairingCode);
+
+          // Update database with pairing code
+          await supabase
+            .from('devices')
+            .update({ 
+              pairing_code: pairingCode,
+              status: 'connecting',
+              qr_code: null // Clear QR code when using pairing
+            })
+            .eq('id', device.id);
+
+          console.log('✅ Pairing code saved to database');
+        } catch (pairingError) {
+          console.error('❌ Error requesting pairing code:', pairingError);
+          await supabase
+            .from('devices')
+            .update({ 
+              status: 'error',
+              qr_code: null,
+              pairing_code: null
+            })
+            .eq('id', device.id);
+          return;
+        }
+      }
+    }
+
     // Handle connection updates
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
-      // Handle QR or Pairing code
+      // Handle QR code (only for QR method)
       if (qr) {
         console.log('📷 QR Code generated for', device.device_name);
         
         try {
-          // Check if device wants pairing code instead
+          // Check connection method
           const { data: deviceData } = await supabase
             .from('devices')
-            .select('connection_method, phone_for_pairing')
+            .select('connection_method')
             .eq('id', device.id)
             .single();
 
-          if (deviceData?.connection_method === 'pairing' && deviceData?.phone_for_pairing) {
-            // Request pairing code
-            console.log('📱 Requesting pairing code for', deviceData.phone_for_pairing);
-            const pairingCode = await sock.requestPairingCode(deviceData.phone_for_pairing);
-            console.log('✅ Pairing code:', pairingCode);
-
-            // Update database with pairing code
-            const { error } = await supabase
-              .from('devices')
-              .update({ 
-                pairing_code: pairingCode,
-                status: 'connecting'
-              })
-              .eq('id', device.id);
-
-            if (error) {
-              console.error('❌ Error saving pairing code to database:', error);
-            } else {
-              console.log('✅ Pairing code saved to database');
-            }
-          } else {
+          // Only process QR if connection method is 'qr'
+          if (!deviceData || deviceData.connection_method === 'qr') {
             // Generate QR as data URL
             const qrDataUrl = await QRCode.toDataURL(qr);
 
@@ -334,10 +359,15 @@ async function connectWhatsApp(device) {
                 connectWhatsApp(device).catch(() => {});
               }
             }, 1500);
-          } else if (code === 405) {
-            // Likely bad auth: clear auth and set error
-            console.log('❌ 405 Authentication failed - clearing session');
-            await supabase.from('devices').update({ status: 'error', qr_code: null, session_data: null }).eq('id', device.id);
+          } else if (code === 401 || code === 405) {
+            // Authentication failed (401 or 405): clear auth and set error
+            console.log(`❌ ${code} Authentication failed - clearing session`);
+            await supabase.from('devices').update({ 
+              status: 'error', 
+              qr_code: null, 
+              pairing_code: null,
+              session_data: null 
+            }).eq('id', device.id);
           } else if (loggedOut) {
             console.log('👋 Logged out - clearing session');
             await supabase.from('devices').update({ status: 'disconnected', phone_number: null, qr_code: null, session_data: null }).eq('id', device.id);
