@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import QRCode from "https://esm.sh/qrcode@1.5.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -152,21 +153,22 @@ serve(async (req) => {
 
 // Helper function to generate QR code
 async function generateQRCode(data: string): Promise<string> {
-  // This is a simplified version. In production, use actual QR generation
-  // For now, we'll create a data URL that represents a QR code
-  const canvas = {
-    width: 300,
-    height: 300
-  };
-  
-  // Simulate QR code generation
-  // In production, you would use a proper QR library or Baileys' built-in QR
-  return `data:image/svg+xml;base64,${btoa(`
-    <svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100%" height="100%" fill="white"/>
-      <text x="50%" y="50%" text-anchor="middle" fill="black" font-size="12">
-        QR: ${data.substring(0, 20)}...
-      </text>
-    </svg>
-  `)}`;
+  try {
+    // Generate QR code as data URL using qrcode library
+    const qrImage = await QRCode.toDataURL(data, {
+      errorCorrectionLevel: "M",
+      type: "image/png",
+      width: 300,
+      margin: 2,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF"
+      }
+    });
+    
+    return qrImage;
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    throw error;
+  }
 }
