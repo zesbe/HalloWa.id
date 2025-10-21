@@ -271,7 +271,7 @@ async function connectWhatsApp(device, isRecovery = false) {
             deviceData?.connection_method === 'pairing' &&
             deviceData?.phone_for_pairing &&
             !pairingCodeRequested &&
-            qr // Wait for QR event which indicates connection is ready for pairing
+            (connection === 'connecting' || qr) // don't wait strictly for QR, either state works
           ) {
             pairingCodeRequested = true;
             const rawPhone = String(deviceData.phone_for_pairing).replace(/\D/g, '');
@@ -288,8 +288,42 @@ async function connectWhatsApp(device, isRecovery = false) {
 
             console.log('📱 Requesting pairing code for:', rawPhone);
             
+            // Schedule a one-time refresh if still not linked after ~45s
+            let refreshScheduled = false;
+            const scheduleRefresh = () => {
+              if (refreshScheduled) return;
+              refreshScheduled = true;
+              setTimeout(async () => {
+                try {
+                  // Re-check current state before refreshing
+                  const { data: latest } = await supabase
+                    .from('devices')
+                    .select('status, connection_method, phone_for_pairing')
+                    .eq('id', device.id)
+                    .single();
+
+                  if (
+                    latest?.status === 'connecting' &&
+                    latest?.connection_method === 'pairing' &&
+                    !sock.authState.creds.registered
+                  ) {
+                    const refreshPhone = String(latest.phone_for_pairing || rawPhone).replace(/\D/g, '');
+                    console.log('⏳ Refreshing pairing code for:', refreshPhone);
+                    const newCode = await sock.requestPairingCode(refreshPhone);
+                    await supabase
+                      .from('devices')
+                      .update({ pairing_code: newCode, status: 'connecting', qr_code: null })
+                      .eq('id', device.id);
+                    console.log('✅ Pairing code refreshed');
+                  }
+                } catch (e) {
+                  console.error('❌ Failed to refresh pairing code:', e?.message || e);
+                }
+              }, 45000);
+            };
+            
             try {
-              // Request pairing code - ini akan kirim notifikasi ke WhatsApp user
+              // Request pairing code — user must open WhatsApp > Linked Devices > Link with phone number
               const code = await sock.requestPairingCode(rawPhone);
               console.log('✅ Pairing code generated successfully:', code);
               
@@ -302,7 +336,8 @@ async function connectWhatsApp(device, isRecovery = false) {
                 })
                 .eq('id', device.id);
               
-              console.log('✅ Pairing code saved to database - check WhatsApp for notification!');
+              console.log('✅ Pairing code saved to database — buka WhatsApp > Linked Devices > Link with phone number, lalu masukkan kode.');
+              scheduleRefresh();
             } catch (pairErr) {
               const status = pairErr?.output?.statusCode || pairErr?.status;
               console.error('❌ Failed to generate pairing code:', status, pairErr?.message);
@@ -318,6 +353,7 @@ async function connectWhatsApp(device, isRecovery = false) {
                       .from('devices')
                       .update({ pairing_code: code, status: 'connecting', qr_code: null })
                       .eq('id', device.id);
+                    scheduleRefresh();
                   } catch (retryErr) {
                     console.error('❌ Retry failed:', retryErr?.message);
                     await supabase.from('devices').update({ 

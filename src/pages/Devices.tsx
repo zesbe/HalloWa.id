@@ -845,6 +845,9 @@ export const Devices = () => {
                   
                   <div className="bg-muted p-3 sm:p-4 rounded-lg">
                     <p className="text-xs sm:text-sm font-medium mb-2 text-center">📱 Cara pairing:</p>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground text-center mb-2">
+                      Catatan: pada mode Kode Pairing biasanya TIDAK ada notifikasi otomatis. Buka WhatsApp secara manual dan ikuti langkah di bawah.
+                    </p>
                     <ol className="text-xs text-muted-foreground space-y-1 sm:space-y-1.5">
                       <li className="flex items-start gap-2">
                         <span className="font-bold text-primary min-w-[1rem]">1.</span>
