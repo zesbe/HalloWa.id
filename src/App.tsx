@@ -13,6 +13,10 @@ import Devices from "./pages/Devices";
 import Broadcast from "./pages/Broadcast";
 import Templates from "./pages/Templates";
 import Settings from "./pages/Settings";
+import Contacts from "./pages/Contacts";
+import Chatbot from "./pages/Chatbot";
+import ApiKeys from "./pages/ApiKeys";
+import Webhooks from "./pages/Webhooks";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +35,10 @@ const App = () => (
             <Route path="/devices" element={<Devices />} />
             <Route path="/broadcast" element={<Broadcast />} />
             <Route path="/templates" element={<Templates />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/api-keys" element={<ApiKeys />} />
+            <Route path="/webhooks" element={<Webhooks />} />
             <Route path="/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
