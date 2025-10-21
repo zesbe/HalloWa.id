@@ -128,75 +128,75 @@ export default function AdminFinancial() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 sm:p-6">
         <div>
-          <h1 className="text-3xl font-bold">Laporan Keuangan</h1>
-          <p className="text-muted-foreground">Pantau pendapatan dan transaksi pembayaran</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Laporan Keuangan</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Pantau pendapatan dan transaksi pembayaran</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <DollarSign className="w-6 h-6 text-primary" />
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 bg-primary/10 rounded-lg shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Pendapatan</p>
-                <p className="text-2xl font-bold">Rp {stats.totalRevenue.toLocaleString('id-ID')}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-500/10 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Pendapatan Bulan Ini</p>
-                <p className="text-2xl font-bold">Rp {stats.monthlyRevenue.toLocaleString('id-ID')}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Total Pendapatan</p>
+                <p className="text-xl sm:text-2xl font-bold truncate">Rp {stats.totalRevenue.toLocaleString('id-ID')}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-500/10 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-500" />
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 bg-green-500/10 rounded-lg shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Transaksi</p>
-                <p className="text-2xl font-bold">{stats.totalPayments}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Pendapatan Bulan Ini</p>
+                <p className="text-xl sm:text-2xl font-bold truncate">Rp {stats.monthlyRevenue.toLocaleString('id-ID')}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-500/10 rounded-lg">
-                <Users className="w-6 h-6 text-purple-500" />
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 bg-blue-500/10 rounded-lg shrink-0">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Transaksi Selesai</p>
-                <p className="text-2xl font-bold">{stats.completedPayments}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Total Transaksi</p>
+                <p className="text-xl sm:text-2xl font-bold">{stats.totalPayments}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 bg-purple-500/10 rounded-lg shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Transaksi Selesai</p>
+                <p className="text-xl sm:text-2xl font-bold">{stats.completedPayments}</p>
               </div>
             </div>
           </Card>
         </div>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-bold mb-4">Riwayat Transaksi</h2>
-          <div className="rounded-md border">
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold mb-4">Riwayat Transaksi</h2>
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Paket</TableHead>
-                  <TableHead>Metode</TableHead>
+                  <TableHead className="min-w-[120px]">Order ID</TableHead>
+                  <TableHead className="hidden md:table-cell">Customer</TableHead>
+                  <TableHead className="hidden lg:table-cell">Paket</TableHead>
+                  <TableHead className="hidden sm:table-cell">Metode</TableHead>
                   <TableHead>Jumlah</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Tanggal</TableHead>
+                  <TableHead className="hidden sm:table-cell">Tanggal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,15 +209,17 @@ export default function AdminFinancial() {
                 ) : (
                   payments.map((payment) => (
                     <TableRow key={payment.id}>
-                      <TableCell className="font-mono text-sm">{payment.order_id}</TableCell>
-                      <TableCell>{payment.user?.full_name || '-'}</TableCell>
-                      <TableCell>{payment.plans?.name || '-'}</TableCell>
-                      <TableCell className="uppercase">{payment.payment_method}</TableCell>
-                      <TableCell className="font-semibold">
+                      <TableCell className="font-mono text-xs sm:text-sm">{payment.order_id}</TableCell>
+                      <TableCell className="hidden md:table-cell">{payment.user?.full_name || '-'}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{payment.plans?.name || '-'}</TableCell>
+                      <TableCell className="hidden sm:table-cell uppercase text-xs sm:text-sm">{payment.payment_method}</TableCell>
+                      <TableCell className="font-semibold text-xs sm:text-sm whitespace-nowrap">
                         Rp {Number(payment.total_payment).toLocaleString('id-ID')}
                       </TableCell>
                       <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                      <TableCell>{new Date(payment.created_at).toLocaleDateString('id-ID')}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">
+                        {new Date(payment.created_at).toLocaleDateString('id-ID')}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

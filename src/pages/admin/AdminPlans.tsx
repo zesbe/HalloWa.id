@@ -197,11 +197,11 @@ export const AdminPlans = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Kelola Plan</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-2xl sm:text-3xl font-bold">Kelola Plan</h1>
+            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
               Manage subscription plans dan features
             </p>
           </div>
@@ -210,7 +210,7 @@ export const AdminPlans = () => {
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Tambah Plan
               </Button>
@@ -468,41 +468,41 @@ export const AdminPlans = () => {
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {plans.map((plan) => (
                 <Card key={plan.id} className={!plan.is_active ? "opacity-60" : ""}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="flex items-center gap-2">
-                          {plan.name}
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <CardTitle className="flex items-center gap-2 flex-wrap">
+                          <span className="truncate">{plan.name}</span>
                           {plan.is_active && (
                             <Badge variant="default" className="text-xs">Active</Badge>
                           )}
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">{plan.description}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{plan.description}</p>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-3xl font-bold">
+                        <p className="text-2xl sm:text-3xl font-bold">
                           Rp {plan.price.toLocaleString("id-ID")}
                         </p>
-                        <p className="text-sm text-muted-foreground">per bulan</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">per bulan</p>
                       </div>
 
                       <div className="space-y-2 py-4 border-t">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm">
                           <span className="text-muted-foreground">Max Devices:</span>
                           <span className="font-medium">{plan.max_devices}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm">
                           <span className="text-muted-foreground">Max Contacts:</span>
                           <span className="font-medium">{plan.max_contacts.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm">
                           <span className="text-muted-foreground">Max Broadcasts:</span>
                           <span className="font-medium">{plan.max_broadcasts}</span>
                         </div>
@@ -513,8 +513,8 @@ export const AdminPlans = () => {
                           <p className="text-sm font-medium">Features:</p>
                           <div className="space-y-1">
                             {(plan.features as string[]).map((feature, idx) => (
-                              <div key={idx} className="flex items-center gap-2 text-sm">
-                                <Check className="w-4 h-4 text-green-500" />
+                              <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
+                                <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 shrink-0" />
                                 <span className="capitalize">
                                   {feature.replace(/_/g, " ")}
                                 </span>
@@ -529,17 +529,18 @@ export const AdminPlans = () => {
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleEdit(plan)}
-                          className="flex-1"
+                          className="flex-1 text-xs sm:text-sm"
                         >
-                          <Edit className="w-4 h-4 mr-2" />
+                          <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                           Edit
                         </Button>
                         <Button 
                           variant="destructive" 
                           size="sm" 
                           onClick={() => handleDelete(plan.id)}
+                          className="text-xs sm:text-sm"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
                     </div>
