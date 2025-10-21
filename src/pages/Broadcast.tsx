@@ -36,6 +36,7 @@ export const Broadcast = () => {
   const [currentNumber, setCurrentNumber] = useState("");
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [contactSearch, setContactSearch] = useState("");
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     message: "",
@@ -145,6 +146,25 @@ export const Broadcast = () => {
       c.name?.toLowerCase().includes(contactSearch.toLowerCase()) ||
       c.phone_number.includes(contactSearch)
   );
+
+  const handleSendNow = async (broadcastId: string) => {
+    setSendingId(broadcastId);
+    try {
+      const { error } = await supabase
+        .from("broadcasts")
+        .update({ status: "processing" })
+        .eq("id", broadcastId);
+
+      if (error) throw error;
+
+      toast.success("Broadcast sedang diproses");
+      fetchData();
+    } catch (error: any) {
+      toast.error("Gagal mengirim broadcast: " + error.message);
+    } finally {
+      setSendingId(null);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -371,9 +391,23 @@ export const Broadcast = () => {
                     </div>
                   </div>
                   {broadcast.status === "draft" && (
-                    <Button className="w-full" size="lg">
-                      <Send className="w-4 h-4 mr-2" />
-                      Kirim Sekarang
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => handleSendNow(broadcast.id)}
+                      disabled={sendingId === broadcast.id}
+                    >
+                      {sendingId === broadcast.id ? (
+                        <>
+                          <Clock className="w-4 h-4 mr-2 animate-spin" />
+                          Mengirim...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Kirim Sekarang
+                        </>
+                      )}
                     </Button>
                   )}
                   {broadcast.status === "processing" && (
