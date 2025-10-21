@@ -191,11 +191,14 @@ export type Database = {
       devices: {
         Row: {
           api_key: string | null
+          connection_method: string | null
           created_at: string
           device_name: string
           id: string
           is_multidevice: boolean | null
           last_connected_at: string | null
+          pairing_code: string | null
+          phone_for_pairing: string | null
           phone_number: string | null
           qr_code: string | null
           server_id: string | null
@@ -207,11 +210,14 @@ export type Database = {
         }
         Insert: {
           api_key?: string | null
+          connection_method?: string | null
           created_at?: string
           device_name: string
           id?: string
           is_multidevice?: boolean | null
           last_connected_at?: string | null
+          pairing_code?: string | null
+          phone_for_pairing?: string | null
           phone_number?: string | null
           qr_code?: string | null
           server_id?: string | null
@@ -223,11 +229,14 @@ export type Database = {
         }
         Update: {
           api_key?: string | null
+          connection_method?: string | null
           created_at?: string
           device_name?: string
           id?: string
           is_multidevice?: boolean | null
           last_connected_at?: string | null
+          pairing_code?: string | null
+          phone_for_pairing?: string | null
           phone_number?: string | null
           qr_code?: string | null
           server_id?: string | null

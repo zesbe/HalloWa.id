@@ -222,30 +222,59 @@ async function connectWhatsApp(device) {
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
-      // Generate QR code
+      // Handle QR or Pairing code
       if (qr) {
         console.log('📷 QR Code generated for', device.device_name);
         
         try {
-          // Generate QR as data URL
-          const qrDataUrl = await QRCode.toDataURL(qr);
-
-          // Update database with QR code
-          const { error } = await supabase
+          // Check if device wants pairing code instead
+          const { data: deviceData } = await supabase
             .from('devices')
-            .update({ 
-              qr_code: qrDataUrl,
-              status: 'connecting'
-            })
-            .eq('id', device.id);
+            .select('connection_method, phone_for_pairing')
+            .eq('id', device.id)
+            .single();
 
-          if (error) {
-            console.error('❌ Error saving QR to database:', error);
+          if (deviceData?.connection_method === 'pairing' && deviceData?.phone_for_pairing) {
+            // Request pairing code
+            console.log('📱 Requesting pairing code for', deviceData.phone_for_pairing);
+            const pairingCode = await sock.requestPairingCode(deviceData.phone_for_pairing);
+            console.log('✅ Pairing code:', pairingCode);
+
+            // Update database with pairing code
+            const { error } = await supabase
+              .from('devices')
+              .update({ 
+                pairing_code: pairingCode,
+                status: 'connecting'
+              })
+              .eq('id', device.id);
+
+            if (error) {
+              console.error('❌ Error saving pairing code to database:', error);
+            } else {
+              console.log('✅ Pairing code saved to database');
+            }
           } else {
-            console.log('✅ QR saved to database');
+            // Generate QR as data URL
+            const qrDataUrl = await QRCode.toDataURL(qr);
+
+            // Update database with QR code
+            const { error } = await supabase
+              .from('devices')
+              .update({ 
+                qr_code: qrDataUrl,
+                status: 'connecting'
+              })
+              .eq('id', device.id);
+
+            if (error) {
+              console.error('❌ Error saving QR to database:', error);
+            } else {
+              console.log('✅ QR saved to database');
+            }
           }
         } catch (qrError) {
-          console.error('❌ Error generating QR code:', qrError);
+          console.error('❌ Error generating QR/pairing code:', qrError);
         }
       }
 

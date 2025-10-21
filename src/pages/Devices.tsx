@@ -24,6 +24,9 @@ interface Device {
   status: string;
   phone_number: string | null;
   qr_code: string | null;
+  pairing_code: string | null;
+  connection_method: string | null;
+  phone_for_pairing: string | null;
   last_connected_at: string | null;
   api_key: string | null;
   server_id: string | null;
@@ -44,6 +47,8 @@ export const Devices = () => {
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [swipedDeviceId, setSwipedDeviceId] = useState<string | null>(null);
+  const [connectionMethod, setConnectionMethod] = useState<'qr' | 'pairing'>('qr');
+  const [pairingPhone, setPairingPhone] = useState('');
 
   // Request notification permission on mount
   useEffect(() => {
@@ -171,9 +176,16 @@ export const Devices = () => {
     }
   };
 
-  const handleConnectDevice = async (device: Device) => {
+  const handleConnectDevice = async (device: Device, method?: 'qr' | 'pairing', phone?: string) => {
     setSelectedDevice(device);
     setQrDialogOpen(true);
+    
+    // If no method specified, show selection dialog
+    if (!method) {
+      setConnectionStatus("idle");
+      return;
+    }
+
     setConnectionStatus("connecting");
     setQrExpiry(60);
     
@@ -184,20 +196,28 @@ export const Devices = () => {
       }
       
       // Update device status to 'connecting' - Railway service will detect this
+      const updateData: any = { 
+        status: "connecting",
+        qr_code: null,
+        pairing_code: null,
+        connection_method: method
+      };
+
+      if (method === 'pairing' && phone) {
+        updateData.phone_for_pairing = phone;
+      }
+
       const { error } = await supabase
         .from("devices")
-        .update({ 
-          status: "connecting",
-          qr_code: null 
-        })
+        .update(updateData)
         .eq("id", device.id);
 
       if (error) throw error;
 
-      setConnectionStatus("generating_qr");
-      toast.info("Menghubungkan ke WhatsApp...");
+      setConnectionStatus(method === 'qr' ? "generating_qr" : "generating_pairing");
+      toast.info(method === 'qr' ? "Menghubungkan ke WhatsApp..." : "Membuat kode pairing...");
 
-      // Poll database for QR code updates from Railway service
+      // Poll database for QR code or pairing code updates from Railway service
       const interval = setInterval(async () => {
         const { data, error } = await supabase
           .from("devices")
@@ -215,10 +235,16 @@ export const Devices = () => {
           setSelectedDevice(data);
 
           // Check for QR code
-          if (data.qr_code && data.status === "connecting") {
+          if (data.qr_code && data.status === "connecting" && method === 'qr') {
             setConnectionStatus("qr_ready");
             setQrExpiry(60);
             toast.success("QR Code siap! Scan sekarang");
+          }
+
+          // Check for pairing code
+          if (data.pairing_code && data.status === "connecting" && method === 'pairing') {
+            setConnectionStatus("pairing_ready");
+            toast.success("Kode pairing siap! Masukkan di WhatsApp");
           }
 
           // Check if connected
@@ -231,6 +257,7 @@ export const Devices = () => {
             setTimeout(() => {
               setQrDialogOpen(false);
               setConnectionStatus("idle");
+              setPairingPhone('');
             }, 1500);
           }
 
@@ -252,12 +279,12 @@ export const Devices = () => {
           clearInterval(interval);
           setPollingInterval(null);
           if (connectionStatus !== "connected") {
-            setConnectionStatus("qr_expired");
-            toast.error("QR Code expired. Silakan coba lagi.");
+            setConnectionStatus(method === 'qr' ? "qr_expired" : "pairing_expired");
+            toast.error(method === 'qr' ? "QR Code expired. Silakan coba lagi." : "Kode pairing expired. Silakan coba lagi.");
             if (selectedDevice) {
               await supabase
                 .from("devices")
-                .update({ status: "disconnected", qr_code: null })
+                .update({ status: "disconnected", qr_code: null, pairing_code: null })
                 .eq("id", selectedDevice.id);
             }
           }
@@ -277,8 +304,9 @@ export const Devices = () => {
         clearInterval(pollingInterval);
         setPollingInterval(null);
       }
-      // Reconnect
-      handleConnectDevice(selectedDevice);
+      // Reconnect with same method
+      const method = selectedDevice.connection_method as 'qr' | 'pairing' || 'qr';
+      handleConnectDevice(selectedDevice, method, selectedDevice.phone_for_pairing || undefined);
     }
   };
 
@@ -645,7 +673,7 @@ export const Devices = () => {
           </>
         )}
 
-        {/* QR Code Dialog */}
+        {/* Connection Dialog - QR or Pairing */}
         <Dialog open={qrDialogOpen} onOpenChange={async (open) => {
           setQrDialogOpen(open);
           if (!open) {
@@ -654,6 +682,8 @@ export const Devices = () => {
               return; // handleCancelConnect will close and reset
             }
             setConnectionStatus("idle");
+            setPairingPhone('');
+            setConnectionMethod('qr');
             if (pollingInterval) {
               clearInterval(pollingInterval);
               setPollingInterval(null);
@@ -663,19 +693,79 @@ export const Devices = () => {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-center text-xl">
-                {connectionStatus === "connected" ? "✅ Berhasil Terhubung!" : "Scan QR Code"}
+                {connectionStatus === "connected" ? "✅ Berhasil Terhubung!" : 
+                 connectionStatus === "idle" ? "Pilih Metode Koneksi" :
+                 selectedDevice?.connection_method === 'pairing' ? "Kode Pairing" : "Scan QR Code"}
               </DialogTitle>
               <DialogDescription className="text-center">
+                {connectionStatus === "idle" && "Pilih cara menghubungkan WhatsApp"}
                 {connectionStatus === "connecting" && "Menghubungkan ke server..."}
                 {connectionStatus === "generating_qr" && "Membuat QR code..."}
+                {connectionStatus === "generating_pairing" && "Membuat kode pairing..."}
                 {connectionStatus === "qr_ready" && `QR code siap di-scan (${qrExpiry}s)`}
+                {connectionStatus === "pairing_ready" && "Masukkan kode ini di WhatsApp"}
                 {connectionStatus === "qr_expired" && "QR code expired"}
+                {connectionStatus === "pairing_expired" && "Kode pairing expired"}
                 {connectionStatus === "connected" && "WhatsApp berhasil terhubung!"}
                 {connectionStatus === "error" && "Terjadi kesalahan"}
               </DialogDescription>
             </DialogHeader>
             
             <div className="flex flex-col items-center justify-center p-6 space-y-4">
+              {connectionStatus === "idle" && (
+                <div className="space-y-4 w-full">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant={connectionMethod === 'qr' ? 'default' : 'outline'}
+                      onClick={() => setConnectionMethod('qr')}
+                      className="h-24 flex flex-col gap-2"
+                    >
+                      <QrCode className="w-8 h-8" />
+                      <span>QR Code</span>
+                    </Button>
+                    <Button
+                      variant={connectionMethod === 'pairing' ? 'default' : 'outline'}
+                      onClick={() => setConnectionMethod('pairing')}
+                      className="h-24 flex flex-col gap-2"
+                    >
+                      <Smartphone className="w-8 h-8" />
+                      <span>Kode Pairing</span>
+                    </Button>
+                  </div>
+
+                  {connectionMethod === 'pairing' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="pairingPhone">Nomor WhatsApp</Label>
+                      <Input
+                        id="pairingPhone"
+                        type="tel"
+                        placeholder="62812345678"
+                        value={pairingPhone}
+                        onChange={(e) => setPairingPhone(e.target.value.replace(/\D/g, ''))}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Masukkan nomor dengan kode negara (tanpa +)
+                      </p>
+                    </div>
+                  )}
+
+                  <Button 
+                    className="w-full" 
+                    onClick={() => {
+                      if (connectionMethod === 'pairing' && !pairingPhone) {
+                        toast.error('Masukkan nomor WhatsApp');
+                        return;
+                      }
+                      if (selectedDevice) {
+                        handleConnectDevice(selectedDevice, connectionMethod, pairingPhone || undefined);
+                      }
+                    }}
+                  >
+                    Hubungkan
+                  </Button>
+                </div>
+              )}
+
               {connectionStatus === "connecting" && (
                 <div className="flex flex-col items-center gap-4">
                   <RefreshCw className="w-12 h-12 animate-spin text-primary" />
@@ -689,7 +779,74 @@ export const Devices = () => {
                   <p className="text-sm text-muted-foreground">Membuat QR code...</p>
                 </div>
               )}
+
+              {connectionStatus === "generating_pairing" && (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-muted-foreground">Membuat kode pairing...</p>
+                </div>
+              )}
               
+              {(connectionStatus === "pairing_ready" || connectionStatus === "pairing_expired") && selectedDevice?.pairing_code && (
+                <div className="space-y-4 w-full">
+                  <div className="relative bg-gradient-to-br from-primary/10 to-secondary/10 p-8 rounded-2xl shadow-lg mx-auto">
+                    <div className={`text-center ${connectionStatus === "pairing_expired" ? "opacity-30" : ""}`}>
+                      <p className="text-sm text-muted-foreground mb-3">Kode Pairing Anda</p>
+                      <div className="text-6xl font-bold tracking-[0.5em] text-primary font-mono">
+                        {selectedDevice.pairing_code}
+                      </div>
+                    </div>
+                    {connectionStatus === "pairing_expired" && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium">
+                          Kode Expired
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-sm font-medium mb-2 text-center">📱 Cara pairing:</p>
+                    <ol className="text-xs text-muted-foreground space-y-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">1.</span>
+                        <span>Buka WhatsApp di ponsel Anda</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">2.</span>
+                        <span>Tap Menu (⋮) atau Settings (⚙️)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">3.</span>
+                        <span>Pilih "Linked Devices"</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">4.</span>
+                        <span>Tap "Link a Device"</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">5.</span>
+                        <span>Pilih "Link with phone number instead"</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">6.</span>
+                        <span>Masukkan kode pairing di atas</span>
+                      </li>
+                    </ol>
+                  </div>
+                  
+                  <div className="flex items-center justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={handleRefreshQR}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Refresh Kode
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {(connectionStatus === "qr_ready" || connectionStatus === "qr_expired") && selectedDevice?.qr_code && (
                 <div className="space-y-4 w-full">
                   <div className="relative bg-white p-4 rounded-lg shadow-inner mx-auto w-fit">
@@ -777,13 +934,13 @@ export const Devices = () => {
                 </div>
               )}
 
-              {connectionStatus !== "connected" && (
+              {connectionStatus !== "connected" && connectionStatus !== "idle" && (
                 <div className="flex items-center justify-center gap-3 pt-2">
                   <Button variant="outline" onClick={handleCancelConnect}>Batal</Button>
-                  {(connectionStatus === "qr_ready" || connectionStatus === "qr_expired" || connectionStatus === "error") && (
+                  {(connectionStatus === "qr_ready" || connectionStatus === "qr_expired" || connectionStatus === "pairing_ready" || connectionStatus === "pairing_expired" || connectionStatus === "error") && (
                     <Button onClick={handleRefreshQR}>
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Refresh QR
+                      {selectedDevice?.connection_method === 'pairing' ? 'Refresh Kode' : 'Refresh QR'}
                     </Button>
                   )}
                 </div>
