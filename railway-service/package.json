@@ -9,7 +9,7 @@
     "postinstall": "echo 'Dependencies installed successfully'"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.8",
+    "@whiskeysockets/baileys": "^6.7.20",
     "@supabase/supabase-js": "^2.45.0",
     "qrcode": "^1.5.3",
     "qrcode-terminal": "^0.12.0",
