@@ -190,40 +190,52 @@ export type Database = {
       }
       devices: {
         Row: {
+          api_key: string | null
           created_at: string
           device_name: string
           id: string
+          is_multidevice: boolean | null
           last_connected_at: string | null
           phone_number: string | null
           qr_code: string | null
+          server_id: string | null
           session_data: Json | null
           status: string
           updated_at: string
           user_id: string
+          webhook_url: string | null
         }
         Insert: {
+          api_key?: string | null
           created_at?: string
           device_name: string
           id?: string
+          is_multidevice?: boolean | null
           last_connected_at?: string | null
           phone_number?: string | null
           qr_code?: string | null
+          server_id?: string | null
           session_data?: Json | null
           status?: string
           updated_at?: string
           user_id: string
+          webhook_url?: string | null
         }
         Update: {
+          api_key?: string | null
           created_at?: string
           device_name?: string
           id?: string
+          is_multidevice?: boolean | null
           last_connected_at?: string | null
           phone_number?: string | null
           qr_code?: string | null
+          server_id?: string | null
           session_data?: Json | null
           status?: string
           updated_at?: string
           user_id?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -381,7 +393,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_api_key: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

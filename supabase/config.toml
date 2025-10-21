@@ -1,1 +1,4 @@
 project_id = "ierdfxgeectqoekugyvb"
+
+[functions.whatsapp-baileys]
+verify_jwt = false
