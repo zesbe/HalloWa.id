@@ -43,11 +43,15 @@ serve(async (req) => {
     // Generate unique order_id
     const order_id = `INV${Date.now()}${Math.random().toString(36).substring(7).toUpperCase()}`;
     
-    const amount = Number(plan.price);
+    const amount = parseInt(plan.price.toString());
+    if (!amount || amount <= 0) {
+      throw new Error(`Invalid plan price: ${plan.price}`);
+    }
+    
     const pakasirApiKey = Deno.env.get('PAKASIR_API_KEY');
     const pakasirProject = 'halowa';
 
-    console.log('Creating Pakasir transaction:', { order_id, amount, payment_method });
+    console.log('Creating Pakasir transaction:', { order_id, amount, payment_method, plan });
 
     // Call Pakasir API
     const pakasirResponse = await fetch(`https://app.pakasir.com/api/transactioncreate/${payment_method}`, {
