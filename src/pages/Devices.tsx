@@ -10,13 +10,13 @@ import { Plus, Smartphone, QrCode, Trash2, RefreshCw, Copy, LogOut, Info, Rotate
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useSwipeable } from "react-swipeable";
 import { 
   requestNotificationPermission, 
   notifyDeviceConnected, 
   notifyDeviceDisconnected,
   notifyDeviceError 
 } from "@/utils/notifications";
+import { DeviceCard } from "@/components/DeviceCard";
 
 interface Device {
   id: string;
@@ -380,18 +380,19 @@ export const Devices = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="space-y-4 md:space-y-8">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Device Management</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">Device Management</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Kelola semua perangkat WhatsApp yang terhubung
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full">
             <Button
               variant={notificationsEnabled ? "default" : "outline"}
               size="icon"
+              className="shrink-0"
               onClick={async () => {
                 const granted = await requestNotificationPermission();
                 setNotificationsEnabled(granted);
@@ -407,9 +408,10 @@ export const Devices = () => {
             </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-primary to-secondary text-white">
+                <Button className="bg-gradient-to-r from-primary to-secondary text-white flex-1">
                   <Plus className="w-4 h-4 mr-2" />
-                  Tambah Device
+                  <span className="hidden sm:inline">Tambah Device</span>
+                  <span className="sm:hidden">Tambah</span>
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -480,10 +482,31 @@ export const Devices = () => {
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <CardContent className="p-6">
-              <div className="overflow-x-auto">
-                <Table>
+          <>
+            {/* Mobile View - Swipeable Cards */}
+            <div className="md:hidden space-y-3">
+              {devices.map((device) => (
+                <DeviceCard
+                  key={device.id}
+                  device={device}
+                  onConnect={handleConnectDevice}
+                  onDetail={handleDetail}
+                  onClearSession={handleClearSession}
+                  onRelog={handleRelog}
+                  onLogout={handleLogout}
+                  onDelete={handleDeleteDevice}
+                  onCopyApiKey={copyToClipboard}
+                  getStatusColor={getStatusColor}
+                  getStatusText={getStatusText}
+                />
+              ))}
+            </div>
+
+            {/* Desktop View - Table */}
+            <Card className="hidden md:block">
+              <CardContent className="p-6">
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
                       <TableHead className="font-semibold">Device</TableHead>
@@ -606,6 +629,7 @@ export const Devices = () => {
               </div>
             </CardContent>
           </Card>
+          </>
         )}
 
         {/* QR Code Dialog */}

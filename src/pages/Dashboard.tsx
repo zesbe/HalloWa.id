@@ -84,18 +84,17 @@ export const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="space-y-4 md:space-y-8">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">Dashboard</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Kelola semua perangkat WhatsApp Anda dalam satu tempat
             </p>
           </div>
           <Button
             onClick={() => navigate("/devices")}
-            className="bg-gradient-to-r from-primary to-secondary text-white shadow-lg hover:shadow-xl transition-all"
+            className="bg-gradient-to-r from-primary to-secondary text-white shadow-lg hover:shadow-xl transition-all w-full"
           >
             <Plus className="w-4 h-4 mr-2" />
             Tambah Device
@@ -103,7 +102,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           <StatCard
             title="Total Devices"
             value={stats.totalDevices}

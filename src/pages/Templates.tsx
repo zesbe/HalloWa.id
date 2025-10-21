@@ -94,17 +94,17 @@ export const Templates = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="space-y-4 md:space-y-8">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Message Templates</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">Templates</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Simpan template pesan untuk digunakan kembali
             </p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-primary to-secondary text-white">
+              <Button className="bg-gradient-to-r from-primary to-secondary text-white w-full">
                 <Plus className="w-4 h-4 mr-2" />
                 Buat Template
               </Button>
@@ -153,7 +153,7 @@ export const Templates = () => {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {templates.map((template) => (
             <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <CardHeader>

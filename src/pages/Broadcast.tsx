@@ -114,17 +114,17 @@ export const Broadcast = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="space-y-4 md:space-y-8">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Broadcast</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">Broadcast</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Kirim pesan ke banyak kontak sekaligus
             </p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-primary to-secondary text-white">
+              <Button className="bg-gradient-to-r from-primary to-secondary text-white w-full">
                 <Plus className="w-4 h-4 mr-2" />
                 Buat Broadcast
               </Button>
@@ -185,8 +185,18 @@ export const Broadcast = () => {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          {broadcasts.map((broadcast) => {
+        <div className="grid grid-cols-1 gap-4">
+          {broadcasts.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Send className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">
+                  Belum ada broadcast. Buat broadcast pertama Anda!
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            broadcasts.map((broadcast) => {
             const StatusIcon = getStatusIcon(broadcast.status);
             return (
               <Card key={broadcast.id}>
@@ -205,24 +215,25 @@ export const Broadcast = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm">
                     <div>
-                      <p className="text-muted-foreground">Terkirim</p>
-                      <p className="text-lg font-semibold">{broadcast.sent_count}</p>
+                      <p className="text-muted-foreground text-[10px] md:text-xs">Terkirim</p>
+                      <p className="text-base md:text-lg font-semibold">{broadcast.sent_count}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Gagal</p>
-                      <p className="text-lg font-semibold">{broadcast.failed_count}</p>
+                      <p className="text-muted-foreground text-[10px] md:text-xs">Gagal</p>
+                      <p className="text-base md:text-lg font-semibold">{broadcast.failed_count}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Dibuat</p>
-                      <p className="text-sm">{new Date(broadcast.created_at).toLocaleDateString()}</p>
+                      <p className="text-muted-foreground text-[10px] md:text-xs">Dibuat</p>
+                      <p className="text-xs md:text-sm">{new Date(broadcast.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             );
-          })}
+          })
+        )}
         </div>
       </div>
     </Layout>
