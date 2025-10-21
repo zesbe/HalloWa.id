@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Send, Clock, CheckCircle2, XCircle, X, Users, RefreshCw, Copy, FileText, Download, Eye, Trash2, MoreVertical, Loader2, PlayCircle, Upload, Image as ImageIcon, BarChart3 } from "lucide-react";
+import { Plus, Send, Clock, CheckCircle2, XCircle, X, Users, RefreshCw, Copy, FileText, Download, Eye, Trash2, MoreVertical, Loader2, PlayCircle, Upload, Image as ImageIcon, BarChart3, Shield, Zap } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +36,7 @@ import { ContactFilter } from "@/components/ContactFilter";
 import { QuickTemplates } from "@/components/QuickTemplates";
 import { CSVImport } from "@/components/CSVImport";
 import { BroadcastStats } from "@/components/BroadcastStats";
+import { BroadcastSafetyWarning } from "@/components/BroadcastSafetyWarning";
 
 interface Broadcast {
   id: string;
@@ -74,6 +75,11 @@ export const Broadcast = () => {
     device_id: "",
     target_contacts: [] as string[],
     media_url: null as string | null,
+    delay_type: "auto" as "auto" | "manual" | "adaptive",
+    delay_seconds: 5,
+    randomize_delay: true,
+    batch_size: 20,
+    pause_between_batches: 60,
   });
 
   useEffect(() => {
@@ -163,6 +169,23 @@ export const Broadcast = () => {
       return;
     }
 
+    // Validate delay settings for safety
+    if (formData.delay_type === 'manual') {
+      if (allTargets.length > 50 && formData.delay_seconds < 5) {
+        toast.error("Delay terlalu cepat!", {
+          description: "Untuk 50+ kontak, gunakan minimal 5 detik atau mode Auto"
+        });
+        return;
+      }
+      
+      if (allTargets.length > 100 && formData.delay_seconds < 8) {
+        toast.error("Delay terlalu cepat!", {
+          description: "Untuk 100+ kontak, gunakan minimal 8 detik atau mode Auto"
+        });
+        return;
+      }
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
@@ -175,11 +198,20 @@ export const Broadcast = () => {
         media_url: formData.media_url,
         target_contacts: allTargets,
         status: "draft",
+        delay_type: formData.delay_type,
+        delay_seconds: formData.delay_seconds,
+        randomize_delay: formData.randomize_delay,
+        batch_size: formData.batch_size,
+        pause_between_batches: formData.pause_between_batches,
       });
 
       if (error) throw error;
 
-      toast.success("Broadcast berhasil dibuat");
+      toast.success("Broadcast berhasil dibuat", {
+        description: formData.delay_type === 'auto' 
+          ? "Delay otomatis akan disesuaikan untuk keamanan" 
+          : `Delay ${formData.delay_seconds}s per pesan`
+      });
       setDialogOpen(false);
       resetForm();
       fetchData();
@@ -189,7 +221,18 @@ export const Broadcast = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", message: "", device_id: "", target_contacts: [], media_url: null });
+    setFormData({ 
+      name: "", 
+      message: "", 
+      device_id: "", 
+      target_contacts: [], 
+      media_url: null,
+      delay_type: "auto",
+      delay_seconds: 5,
+      randomize_delay: true,
+      batch_size: 20,
+      pause_between_batches: 60,
+    });
     setManualNumbers([]);
     setSelectedContacts([]);
     setCurrentNumber("");
@@ -611,6 +654,90 @@ export const Broadcast = () => {
                       )}
                     </div>
 
+                    {/* Delay & Safety Settings */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base font-semibold">⚡ Pengaturan Keamanan</Label>
+                        <Badge variant="outline" className="text-xs">Anti-Banned</Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="delay-type">Mode Pengiriman</Label>
+                        <Select
+                          value={formData.delay_type}
+                          onValueChange={(value: any) => setFormData({ ...formData, delay_type: value })}
+                        >
+                          <SelectTrigger id="delay-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="auto">
+                              <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-success" />
+                                <div>
+                                  <p className="font-medium">Auto (Recommended)</p>
+                                  <p className="text-xs text-muted-foreground">Delay otomatis berdasarkan jumlah</p>
+                                </div>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="adaptive">
+                              <div className="flex items-center gap-2">
+                                <Zap className="w-4 h-4 text-primary" />
+                                <div>
+                                  <p className="font-medium">Adaptive</p>
+                                  <p className="text-xs text-muted-foreground">Menyesuaikan dengan respons WA</p>
+                                </div>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="manual">
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-warning" />
+                                <div>
+                                  <p className="font-medium">Manual</p>
+                                  <p className="text-xs text-muted-foreground">Atur delay sendiri</p>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {formData.delay_type === 'manual' && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="delay">Delay Antar Pesan</Label>
+                            <Badge variant="secondary">{formData.delay_seconds}s</Badge>
+                          </div>
+                          <Input
+                            id="delay"
+                            type="range"
+                            min="2"
+                            max="30"
+                            value={formData.delay_seconds}
+                            onChange={(e) => setFormData({ ...formData, delay_seconds: parseInt(e.target.value) })}
+                            className="w-full"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Minimal 2 detik, maksimal 30 detik
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="randomize" className="cursor-pointer">Randomize Delay</Label>
+                          <p className="text-xs text-muted-foreground">Tambah variasi ±30% untuk lebih natural</p>
+                        </div>
+                        <Checkbox
+                          id="randomize"
+                          checked={formData.randomize_delay}
+                          onCheckedChange={(checked) => 
+                            setFormData({ ...formData, randomize_delay: checked as boolean })
+                          }
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Penerima</Label>
@@ -723,6 +850,17 @@ export const Broadcast = () => {
                         hasMedia={!!formData.media_url}
                         mediaUrl={formData.media_url}
                       />
+
+                      {/* Safety Warning */}
+                      {(manualNumbers.length + selectedContacts.length) > 0 && (
+                        <div className="mt-4">
+                          <BroadcastSafetyWarning 
+                            contactCount={manualNumbers.length + selectedContacts.length}
+                            delaySeconds={formData.delay_seconds}
+                            delayType={formData.delay_type}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -46,13 +46,18 @@ export type Database = {
       }
       broadcasts: {
         Row: {
+          batch_size: number | null
           created_at: string
+          delay_seconds: number | null
+          delay_type: string | null
           device_id: string
           failed_count: number | null
           id: string
           media_url: string | null
           message: string
           name: string
+          pause_between_batches: number | null
+          randomize_delay: boolean | null
           scheduled_at: string | null
           sent_count: number | null
           status: string
@@ -61,13 +66,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          batch_size?: number | null
           created_at?: string
+          delay_seconds?: number | null
+          delay_type?: string | null
           device_id: string
           failed_count?: number | null
           id?: string
           media_url?: string | null
           message: string
           name: string
+          pause_between_batches?: number | null
+          randomize_delay?: boolean | null
           scheduled_at?: string | null
           sent_count?: number | null
           status?: string
@@ -76,13 +86,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          batch_size?: number | null
           created_at?: string
+          delay_seconds?: number | null
+          delay_type?: string | null
           device_id?: string
           failed_count?: number | null
           id?: string
           media_url?: string | null
           message?: string
           name?: string
+          pause_between_batches?: number | null
+          randomize_delay?: boolean | null
           scheduled_at?: string | null
           sent_count?: number | null
           status?: string

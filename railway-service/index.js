@@ -608,8 +608,47 @@ async function processBroadcasts() {
         let sentCount = 0;
         let failedCount = 0;
 
-        // Send to each target contact
-        for (const contact of broadcast.target_contacts) {
+        // Get delay settings
+        const delayType = broadcast.delay_type || 'auto';
+        const baseDelay = broadcast.delay_seconds || 5;
+        const randomizeDelay = broadcast.randomize_delay !== false;
+        const batchSize = broadcast.batch_size || 20;
+        const pauseBetweenBatches = (broadcast.pause_between_batches || 60) * 1000;
+
+        // Calculate adaptive delay based on contact count
+        const getAdaptiveDelay = (contactCount) => {
+          if (delayType === 'auto') {
+            if (contactCount <= 20) return 3000;
+            if (contactCount <= 50) return 5000;
+            if (contactCount <= 100) return 8000;
+            return 12000;
+          } else if (delayType === 'adaptive') {
+            // Start conservative, will adjust based on success rate
+            return Math.max(3000, baseDelay * 1000);
+          } else {
+            // Manual mode
+            return Math.max(2000, baseDelay * 1000);
+          }
+        };
+
+        // Calculate actual delay with randomization
+        const calculateDelay = (baseDelayMs) => {
+          if (!randomizeDelay) return baseDelayMs;
+          
+          // Add random variation ±30%
+          const variation = 0.3;
+          const minDelay = baseDelayMs * (1 - variation);
+          const maxDelay = baseDelayMs * (1 + variation);
+          return Math.floor(Math.random() * (maxDelay - minDelay) + minDelay);
+        };
+
+        const adaptiveDelayMs = getAdaptiveDelay(broadcast.target_contacts.length);
+        console.log(`📊 Delay settings: type=${delayType}, base=${baseDelay}s, adaptive=${adaptiveDelayMs}ms, randomize=${randomizeDelay}`);
+
+        // Send to each target contact with intelligent batching
+        for (let i = 0; i < broadcast.target_contacts.length; i++) {
+          const contact = broadcast.target_contacts[i];
+          
           try {
             // Extract phone number from contact object or use as string
             const phoneNumber = typeof contact === 'object' ? contact.phone_number : contact;
@@ -706,14 +745,36 @@ async function processBroadcasts() {
             await sock.sendMessage(jid, messageContent);
             
             sentCount++;
-            console.log(`✅ Sent to ${phoneNumber}`);
+            console.log(`✅ Sent to ${phoneNumber} (${i + 1}/${broadcast.target_contacts.length})`);
             
-            // Add small delay between messages to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Batch pause logic
+            if ((i + 1) % batchSize === 0 && i < broadcast.target_contacts.length - 1) {
+              console.log(`⏸️ Batch complete (${i + 1} messages). Pausing for ${pauseBetweenBatches / 1000}s...`);
+              
+              // Update progress during pause
+              await supabase
+                .from('broadcasts')
+                .update({
+                  sent_count: sentCount,
+                  failed_count: failedCount,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', broadcast.id);
+              
+              await new Promise(resolve => setTimeout(resolve, pauseBetweenBatches));
+            } else if (i < broadcast.target_contacts.length - 1) {
+              // Regular delay between messages
+              const delayMs = calculateDelay(adaptiveDelayMs);
+              console.log(`⏱️ Waiting ${delayMs}ms before next message...`);
+              await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
             
           } catch (sendError) {
             failedCount++;
             console.error(`❌ Failed to send to ${contact}:`, sendError.message);
+            
+            // Small delay even on error
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
         }
 
