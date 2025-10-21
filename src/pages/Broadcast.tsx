@@ -560,12 +560,23 @@ export const Broadcast = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Buat Broadcast Baru</DialogTitle>
-                <DialogDescription>
-                  Kirim pesan ke multiple kontak sekaligus dengan preview real-time
-                </DialogDescription>
-              </DialogHeader>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <DialogHeader className="flex-1">
+                  <DialogTitle>Buat Broadcast Baru</DialogTitle>
+                  <DialogDescription>
+                    Kirim pesan ke multiple kontak sekaligus dengan preview real-time
+                  </DialogDescription>
+                </DialogHeader>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDialogOpen(false)}
+                  className="h-8 w-8 rounded-full hover:bg-accent flex-shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               <form onSubmit={handleCreate}>
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Form Section */}

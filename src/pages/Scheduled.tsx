@@ -515,16 +515,28 @@ export default function Scheduled() {
             </DialogTrigger>
             <DialogContent className="max-w-full md:max-w-2xl h-[100dvh] md:h-auto max-h-[90vh] p-0 gap-0">
               <div className="sticky top-0 z-10 bg-background border-b px-4 md:px-6 py-4">
-                <DialogHeader>
-                  <DialogTitle className="text-lg md:text-xl">Buat Broadcast Terjadwal</DialogTitle>
-                  <DialogDescription className="text-sm">
-                    Atur jadwal pengiriman broadcast otomatis
-                  </DialogDescription>
-                </DialogHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <DialogHeader className="flex-1">
+                    <DialogTitle className="text-lg md:text-xl">Buat Broadcast Terjadwal</DialogTitle>
+                    <DialogDescription className="text-sm">
+                      Atur jadwal pengiriman broadcast otomatis
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setCreateDialogOpen(false)}
+                    className="h-8 w-8 rounded-full hover:bg-accent flex-shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <ScrollArea className="flex-1 h-[calc(100dvh-180px)] md:h-auto">
-                <form onSubmit={handleCreate} className="space-y-4 md:space-y-6 p-4 md:p-6">
-                  <div className="space-y-2">
+              <form onSubmit={handleCreate} className="flex flex-col flex-1 min-h-0">
+                <ScrollArea className="flex-1 h-[calc(100dvh-180px)] md:h-auto">
+                  <div className="space-y-4 md:space-y-6 p-4 md:p-6">
+                    <div className="space-y-2">
                     <Label htmlFor="name" className="text-base md:text-sm">Nama Campaign</Label>
                     <Input
                       id="name"
@@ -707,15 +719,16 @@ export default function Scheduled() {
                         {manualNumbers.length + selectedContacts.length}
                       </Badge>
                     </div>
+                    </div>
                   </div>
-                </form>
-              </ScrollArea>
-              <div className="sticky bottom-0 bg-background border-t p-4 md:p-6">
-                <Button type="submit" onClick={handleCreate} className="w-full h-12 md:h-10 text-base md:text-sm">
-                  <Calendar className="w-5 h-5 md:w-4 md:h-4 mr-2" />
-                  Jadwalkan Broadcast
-                </Button>
-              </div>
+                </ScrollArea>
+                <div className="sticky bottom-0 bg-background border-t p-4 md:p-6 shadow-lg">
+                  <Button type="submit" className="w-full h-12 md:h-10 text-base md:text-sm bg-gradient-to-r from-primary to-secondary">
+                    <Calendar className="w-5 h-5 md:w-4 md:h-4 mr-2" />
+                    Jadwalkan Broadcast
+                  </Button>
+                </div>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
