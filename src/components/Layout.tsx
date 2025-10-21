@@ -20,8 +20,6 @@ export const Layout = ({ children }: LayoutProps) => {
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
           <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-end gap-3">
             <ThemeToggle />
-            {/* Mobile Menu Button - Di pojok kanan atas */}
-            <MobileMenuButton onClick={() => setSidebarOpen(true)} />
           </div>
         </div>
         <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
@@ -34,6 +32,9 @@ export const Layout = ({ children }: LayoutProps) => {
       
       {/* Floating Action Button */}
       <FloatingActionButton />
+      
+      {/* Mobile Menu Button - Pojok kanan bawah, sejajar dengan FAB */}
+      <MobileMenuButton onClick={() => setSidebarOpen(true)} />
     </div>
   );
 };
