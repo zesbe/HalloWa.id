@@ -2,7 +2,6 @@ import { ReactNode, useState } from "react";
 import { Sidebar, MobileMenuButton } from "./Sidebar";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileBottomNav } from "./MobileBottomNav";
-import { FloatingActionButton } from "./FloatingActionButton";
 
 interface LayoutProps {
   children: ReactNode;
@@ -30,10 +29,7 @@ export const Layout = ({ children }: LayoutProps) => {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
       
-      {/* Floating Action Button */}
-      <FloatingActionButton />
-      
-      {/* Mobile Menu Button - Pojok kanan bawah, sejajar dengan FAB */}
+      {/* Mobile Menu Button - Pojok kanan bawah */}
       <MobileMenuButton onClick={() => setSidebarOpen(true)} />
     </div>
   );

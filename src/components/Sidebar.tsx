@@ -209,7 +209,7 @@ export const MobileMenuButton = ({ onClick }: { onClick: () => void }) => (
   <Button
     variant="ghost"
     size="icon"
-    className="lg:hidden fixed bottom-20 right-20 z-50 w-14 h-14 rounded-full bg-background/95 backdrop-blur border-2 shadow-lg hover:bg-accent hover:shadow-xl transition-all"
+    className="lg:hidden fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full bg-gradient-to-r from-primary to-secondary text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all"
     onClick={onClick}
   >
     <Menu className="w-6 h-6" />
