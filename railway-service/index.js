@@ -103,6 +103,10 @@ async function startService() {
   // Poll every 5 seconds
   setInterval(checkDevices, 5000);
   console.log('⏱️ Polling started (every 5 seconds)');
+
+  // Process broadcasts every 3 seconds
+  setInterval(processBroadcasts, 3000);
+  console.log('📤 Broadcast processing started (every 3 seconds)');
 }
 
 async function connectWhatsApp(device) {
@@ -263,6 +267,9 @@ async function connectWhatsApp(device) {
       // You can save messages to database here
     });
 
+    // Store sock reference for sending messages
+    sock.deviceId = device.id;
+
   } catch (error) {
     console.error('❌ Error connecting WhatsApp:', error);
     
@@ -318,3 +325,101 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`🌐 Health check server running on port ${PORT}`);
 });
+
+// Process broadcasts
+async function processBroadcasts() {
+  try {
+    // Get broadcasts with status "processing"
+    const { data: broadcasts, error } = await supabase
+      .from('broadcasts')
+      .select('*')
+      .eq('status', 'processing')
+      .limit(5);
+
+    if (error) {
+      console.error('❌ Error fetching broadcasts:', error);
+      return;
+    }
+
+    if (!broadcasts || broadcasts.length === 0) {
+      return;
+    }
+
+    console.log(`📤 Processing ${broadcasts.length} broadcast(s)`);
+
+    for (const broadcast of broadcasts) {
+      try {
+        // Get the socket for this device
+        const sock = activeSockets.get(broadcast.device_id);
+        
+        if (!sock) {
+          console.error(`❌ No active socket for device: ${broadcast.device_id}`);
+          // Update broadcast status to failed
+          await supabase
+            .from('broadcasts')
+            .update({ 
+              status: 'failed',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', broadcast.id);
+          continue;
+        }
+
+        console.log(`📤 Sending broadcast: ${broadcast.name}`);
+        
+        let sentCount = 0;
+        let failedCount = 0;
+
+        // Send to each target contact
+        for (const contact of broadcast.target_contacts) {
+          try {
+            // Format phone number (ensure it has @s.whatsapp.net suffix)
+            const jid = contact.includes('@') ? contact : `${contact}@s.whatsapp.net`;
+            
+            // Send message
+            await sock.sendMessage(jid, { 
+              text: broadcast.message 
+            });
+            
+            sentCount++;
+            console.log(`✅ Sent to ${contact}`);
+            
+            // Add small delay between messages to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+          } catch (sendError) {
+            failedCount++;
+            console.error(`❌ Failed to send to ${contact}:`, sendError.message);
+          }
+        }
+
+        // Update broadcast with results
+        await supabase
+          .from('broadcasts')
+          .update({
+            status: 'completed',
+            sent_count: sentCount,
+            failed_count: failedCount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', broadcast.id);
+
+        console.log(`✅ Broadcast completed: ${sentCount} sent, ${failedCount} failed`);
+
+      } catch (broadcastError) {
+        console.error(`❌ Error processing broadcast ${broadcast.id}:`, broadcastError);
+        
+        // Update broadcast status to failed
+        await supabase
+          .from('broadcasts')
+          .update({ 
+            status: 'failed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', broadcast.id);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error in processBroadcasts:', error);
+  }
+}
