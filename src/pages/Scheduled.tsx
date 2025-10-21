@@ -10,7 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, Clock, Send, XCircle, Edit, Trash2, CheckCircle2, Image as ImageIcon, Users, X, Upload, Loader2 } from "lucide-react";
+import { Plus, Calendar, Clock, Send, XCircle, Edit, Trash2, CheckCircle2, Image as ImageIcon, Users, X, Upload, Loader2, Info, Zap } from "lucide-react";
+import { BroadcastSafetyWarning } from "@/components/BroadcastSafetyWarning";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +39,12 @@ interface Broadcast {
   scheduled_at: string | null;
   created_at: string;
   target_contacts: string[];
+  delay_seconds?: number;
+  randomize_delay?: boolean;
+  batch_size?: number;
+  pause_between_batches?: number;
+  delay_type?: string;
+  device_id?: string;
 }
 
 export default function Scheduled() {
@@ -46,6 +55,7 @@ export default function Scheduled() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedBroadcast, setSelectedBroadcast] = useState<Broadcast | null>(null);
   const [newScheduledTime, setNewScheduledTime] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -60,6 +70,11 @@ export default function Scheduled() {
     device_id: "",
     media_url: null as string | null,
     scheduled_at: "",
+    delay_type: "auto" as string,
+    delay_seconds: 5,
+    randomize_delay: true,
+    batch_size: 20,
+    pause_between_batches: 60,
   });
 
   useEffect(() => {
@@ -143,13 +158,29 @@ export default function Scheduled() {
         scheduled_at: formData.scheduled_at,
         target_contacts: allTargets,
         status: "draft",
+        delay_type: formData.delay_type,
+        delay_seconds: formData.delay_seconds,
+        randomize_delay: formData.randomize_delay,
+        batch_size: formData.batch_size,
+        pause_between_batches: formData.pause_between_batches,
       });
 
       if (error) throw error;
 
       toast.success("Broadcast terjadwal berhasil dibuat");
       setCreateDialogOpen(false);
-      setFormData({ name: "", message: "", device_id: "", media_url: null, scheduled_at: "" });
+      setFormData({ 
+        name: "", 
+        message: "", 
+        device_id: "", 
+        media_url: null, 
+        scheduled_at: "",
+        delay_type: "auto",
+        delay_seconds: 5,
+        randomize_delay: true,
+        batch_size: 20,
+        pause_between_batches: 60,
+      });
       setManualNumbers([]);
       setSelectedContacts([]);
       setCurrentNumber("");
@@ -383,7 +414,10 @@ export default function Scheduled() {
   };
 
   const BroadcastCard = ({ broadcast, showActions = true }: { broadcast: Broadcast; showActions?: boolean }) => (
-    <Card key={broadcast.id} className="hover:shadow-md transition-shadow">
+    <Card key={broadcast.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+      setSelectedBroadcast(broadcast);
+      setDetailDialogOpen(true);
+    }}>
       <CardHeader className="pb-3 md:pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -405,11 +439,14 @@ export default function Scheduled() {
             </div>
           </div>
           {showActions && (
-            <div className="flex gap-1">
+            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleEditSchedule(broadcast)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditSchedule(broadcast);
+                }}
                 disabled={actionLoading === broadcast.id}
                 className="h-10 w-10 md:h-9 md:w-9"
               >
@@ -418,7 +455,10 @@ export default function Scheduled() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => confirmDelete(broadcast)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  confirmDelete(broadcast);
+                }}
                 disabled={actionLoading === broadcast.id}
                 className="h-10 w-10 md:h-9 md:w-9"
               >
@@ -458,11 +498,14 @@ export default function Scheduled() {
         )}
 
         {showActions && broadcast.status === "draft" && (
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
             <Button
               size="default"
               className="flex-1 h-11 md:h-9 text-base md:text-sm"
-              onClick={() => handleSendNow(broadcast.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSendNow(broadcast.id);
+              }}
               disabled={actionLoading === broadcast.id}
             >
               <Send className="w-4 h-4 mr-2" />
@@ -472,7 +515,10 @@ export default function Scheduled() {
               size="default"
               variant="outline"
               className="h-11 md:h-9 text-base md:text-sm sm:w-auto"
-              onClick={() => handleCancelSchedule(broadcast.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCancelSchedule(broadcast.id);
+              }}
               disabled={actionLoading === broadcast.id}
             >
               Batalkan
@@ -719,7 +765,120 @@ export default function Scheduled() {
                         {manualNumbers.length + selectedContacts.length}
                       </Badge>
                     </div>
+                  </div>
+
+                  {/* Anti-Ban Settings */}
+                  <div className="space-y-4 p-4 border rounded-lg bg-accent/20">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-primary" />
+                      <h3 className="font-semibold text-base">Pengaturan Anti-Ban</h3>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-base md:text-sm">Mode Delay</Label>
+                      <Select
+                        value={formData.delay_type}
+                        onValueChange={(value) => setFormData({ ...formData, delay_type: value })}
+                      >
+                        <SelectTrigger className="h-12 md:h-10 text-base">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto" className="text-base md:text-sm py-3 md:py-2">
+                            🤖 Auto (Direkomendasikan)
+                          </SelectItem>
+                          <SelectItem value="manual" className="text-base md:text-sm py-3 md:py-2">
+                            ⚙️ Manual
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Mode Auto akan menyesuaikan delay optimal berdasarkan jumlah penerima
+                      </p>
+                    </div>
+
+                    {formData.delay_type === 'manual' && (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-base md:text-sm">Delay Antar Pesan</Label>
+                            <Badge variant="secondary">{formData.delay_seconds}s</Badge>
+                          </div>
+                          <Slider
+                            value={[formData.delay_seconds]}
+                            onValueChange={(value) => setFormData({ ...formData, delay_seconds: value[0] })}
+                            min={1}
+                            max={30}
+                            step={1}
+                            className="py-2"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Waktu jeda antara setiap pesan (1-30 detik)
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-base md:text-sm">Batch Size</Label>
+                            <Badge variant="secondary">{formData.batch_size} pesan</Badge>
+                          </div>
+                          <Slider
+                            value={[formData.batch_size]}
+                            onValueChange={(value) => setFormData({ ...formData, batch_size: value[0] })}
+                            min={10}
+                            max={50}
+                            step={5}
+                            className="py-2"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Jumlah pesan sebelum pause otomatis
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-base md:text-sm">Pause Antar Batch</Label>
+                            <Badge variant="secondary">{formData.pause_between_batches}s</Badge>
+                          </div>
+                          <Slider
+                            value={[formData.pause_between_batches]}
+                            onValueChange={(value) => setFormData({ ...formData, pause_between_batches: value[0] })}
+                            min={30}
+                            max={300}
+                            step={30}
+                            className="py-2"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Waktu jeda setelah mengirim 1 batch (30-300 detik)
+                          </p>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                      <div className="flex-1">
+                        <Label htmlFor="randomize" className="text-base md:text-sm font-medium cursor-pointer">
+                          Randomize Delay
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Variasi delay untuk tampak lebih natural
+                        </p>
+                      </div>
+                      <Switch
+                        id="randomize"
+                        checked={formData.randomize_delay}
+                        onCheckedChange={(checked) => setFormData({ ...formData, randomize_delay: checked })}
+                      />
+                    </div>
+
+                    {(manualNumbers.length + selectedContacts.length) > 0 && (
+                      <BroadcastSafetyWarning
+                        contactCount={manualNumbers.length + selectedContacts.length}
+                        delaySeconds={formData.delay_seconds}
+                        delayType={formData.delay_type}
+                      />
+                    )}
+                  </div>
                   </div>
                 </ScrollArea>
                 <div className="sticky bottom-0 bg-background border-t p-4 md:p-6 shadow-lg">
@@ -851,6 +1010,224 @@ export default function Scheduled() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Detail Dialog */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-full md:max-w-2xl h-[100dvh] md:h-auto max-h-[90vh] p-0 gap-0 flex flex-col">
+          <div className="flex-shrink-0 bg-background border-b px-4 md:px-6 py-4">
+            <div className="flex items-start justify-between gap-4">
+              <DialogHeader className="flex-1">
+                <DialogTitle className="text-lg md:text-xl">Detail Broadcast</DialogTitle>
+                <DialogDescription className="text-sm">
+                  Informasi lengkap broadcast terjadwal
+                </DialogDescription>
+              </DialogHeader>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setDetailDialogOpen(false)}
+                className="h-8 w-8 rounded-full hover:bg-accent flex-shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <ScrollArea className="flex-1 overflow-y-auto">
+            {selectedBroadcast && (
+              <div className="space-y-6 p-4 md:p-6">
+                {/* Broadcast Info */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Info className="w-5 h-5 text-primary" />
+                    Informasi Broadcast
+                  </h3>
+                  <Card>
+                    <CardContent className="pt-6 space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Nama Campaign</Label>
+                          <p className="font-medium mt-1">{selectedBroadcast.name}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Status</Label>
+                          <div className="mt-1">
+                            <Badge className={getStatusColor(selectedBroadcast.status)}>
+                              {getStatusText(selectedBroadcast.status)}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Dibuat</Label>
+                          <p className="text-sm mt-1">
+                            {formatDateTime(selectedBroadcast.created_at)}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Dijadwalkan</Label>
+                          <p className="text-sm mt-1">
+                            {selectedBroadcast.scheduled_at ? formatDateTime(selectedBroadcast.scheduled_at) : '-'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                        <div className="text-center">
+                          <Label className="text-xs text-muted-foreground">Target</Label>
+                          <p className="text-2xl font-bold text-primary mt-1">
+                            {Array.isArray(selectedBroadcast.target_contacts) ? selectedBroadcast.target_contacts.length : 0}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <Label className="text-xs text-muted-foreground">Terkirim</Label>
+                          <p className="text-2xl font-bold text-success mt-1">
+                            {selectedBroadcast.sent_count || 0}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <Label className="text-xs text-muted-foreground">Gagal</Label>
+                          <p className="text-2xl font-bold text-destructive mt-1">
+                            {selectedBroadcast.failed_count || 0}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Message Preview */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Send className="w-5 h-5 text-primary" />
+                    Preview Pesan
+                  </h3>
+                  <Card>
+                    <CardContent className="pt-6">
+                      {selectedBroadcast.media_url && (
+                        <div className="mb-4">
+                          <img
+                            src={selectedBroadcast.media_url}
+                            alt="Media preview"
+                            className="w-full max-h-64 object-cover rounded-lg"
+                          />
+                        </div>
+                      )}
+                      <p className="whitespace-pre-wrap text-sm">{selectedBroadcast.message}</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Anti-Ban Settings */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-primary" />
+                    Pengaturan Anti-Ban
+                  </h3>
+                  <Card>
+                    <CardContent className="pt-6 space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Mode Delay</Label>
+                          <p className="font-medium mt-1">
+                            {selectedBroadcast.delay_type === 'auto' ? '🤖 Auto' : '⚙️ Manual'}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Delay Antar Pesan</Label>
+                          <p className="font-medium mt-1">{selectedBroadcast.delay_seconds || 5} detik</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Batch Size</Label>
+                          <p className="font-medium mt-1">{selectedBroadcast.batch_size || 20} pesan</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Pause Antar Batch</Label>
+                          <p className="font-medium mt-1">{selectedBroadcast.pause_between_batches || 60} detik</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t">
+                        <CheckCircle2 className={`w-4 h-4 ${selectedBroadcast.randomize_delay ? 'text-success' : 'text-muted-foreground'}`} />
+                        <Label className="text-sm">Randomize Delay {selectedBroadcast.randomize_delay ? 'Aktif' : 'Tidak Aktif'}</Label>
+                      </div>
+
+                      {/* Estimasi */}
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mt-4">
+                        <Label className="text-xs text-muted-foreground">Estimasi Durasi Pengiriman</Label>
+                        <p className="text-2xl font-bold text-primary mt-2">
+                          {(() => {
+                            const targetCount = Array.isArray(selectedBroadcast.target_contacts) ? selectedBroadcast.target_contacts.length : 0;
+                            const delaySeconds = selectedBroadcast.delay_seconds || 5;
+                            const estimatedMinutes = Math.ceil((targetCount * delaySeconds) / 60);
+                            if (estimatedMinutes < 60) {
+                              return `~${estimatedMinutes} menit`;
+                            } else {
+                              return `~${Math.floor(estimatedMinutes / 60)} jam ${estimatedMinutes % 60} menit`;
+                            }
+                          })()}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Berdasarkan {Array.isArray(selectedBroadcast.target_contacts) ? selectedBroadcast.target_contacts.length : 0} penerima dengan delay {selectedBroadcast.delay_seconds || 5}s per pesan
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Actions */}
+                {selectedBroadcast.status === "draft" && (
+                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                    <Button
+                      size="default"
+                      className="flex-1 h-11 md:h-10 text-base md:text-sm"
+                      onClick={() => {
+                        setDetailDialogOpen(false);
+                        handleSendNow(selectedBroadcast.id);
+                      }}
+                      disabled={actionLoading === selectedBroadcast.id}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Kirim Sekarang
+                    </Button>
+                    <Button
+                      size="default"
+                      variant="outline"
+                      className="h-11 md:h-10 text-base md:text-sm"
+                      onClick={() => {
+                        setDetailDialogOpen(false);
+                        handleEditSchedule(selectedBroadcast);
+                      }}
+                      disabled={actionLoading === selectedBroadcast.id}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Jadwal
+                    </Button>
+                    <Button
+                      size="default"
+                      variant="outline"
+                      className="h-11 md:h-10 text-base md:text-sm"
+                      onClick={() => {
+                        setDetailDialogOpen(false);
+                        handleCancelSchedule(selectedBroadcast.id);
+                      }}
+                      disabled={actionLoading === selectedBroadcast.id}
+                    >
+                      Batalkan
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
