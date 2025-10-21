@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Send, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Send, Clock, CheckCircle2, XCircle, X, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,8 +29,13 @@ interface Broadcast {
 export const Broadcast = () => {
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [manualNumbers, setManualNumbers] = useState<string[]>([]);
+  const [currentNumber, setCurrentNumber] = useState("");
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [contactSearch, setContactSearch] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     message: "",
@@ -51,8 +59,14 @@ export const Broadcast = () => {
         .select("*")
         .eq("status", "connected");
 
+      const { data: contactData } = await supabase
+        .from("contacts")
+        .select("*")
+        .order("name");
+
       setBroadcasts(broadcastData || []);
       setDevices(deviceData || []);
+      setContacts(contactData || []);
     } catch (error: any) {
       toast.error("Gagal memuat data");
     } finally {
@@ -62,6 +76,13 @@ export const Broadcast = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const allTargets = [...manualNumbers, ...selectedContacts];
+    if (allTargets.length === 0) {
+      toast.error("Tambahkan minimal 1 nomor atau kontak");
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
@@ -71,7 +92,7 @@ export const Broadcast = () => {
         device_id: formData.device_id,
         name: formData.name,
         message: formData.message,
-        target_contacts: formData.target_contacts,
+        target_contacts: allTargets,
         status: "draft",
       });
 
@@ -80,11 +101,42 @@ export const Broadcast = () => {
       toast.success("Broadcast berhasil dibuat");
       setDialogOpen(false);
       setFormData({ name: "", message: "", device_id: "", target_contacts: [] });
+      setManualNumbers([]);
+      setSelectedContacts([]);
+      setCurrentNumber("");
       fetchData();
     } catch (error: any) {
       toast.error(error.message);
     }
   };
+
+  const addManualNumber = () => {
+    if (!currentNumber.trim()) return;
+    if (manualNumbers.includes(currentNumber.trim())) {
+      toast.error("Nomor sudah ditambahkan");
+      return;
+    }
+    setManualNumbers([...manualNumbers, currentNumber.trim()]);
+    setCurrentNumber("");
+  };
+
+  const removeManualNumber = (number: string) => {
+    setManualNumbers(manualNumbers.filter((n) => n !== number));
+  };
+
+  const toggleContact = (phoneNumber: string) => {
+    setSelectedContacts((prev) =>
+      prev.includes(phoneNumber)
+        ? prev.filter((p) => p !== phoneNumber)
+        : [...prev, phoneNumber]
+    );
+  };
+
+  const filteredContactList = contacts.filter(
+    (c) =>
+      c.name?.toLowerCase().includes(contactSearch.toLowerCase()) ||
+      c.phone_number.includes(contactSearch)
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -129,7 +181,7 @@ export const Broadcast = () => {
                 Buat Broadcast
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle>Buat Broadcast Baru</DialogTitle>
                 <DialogDescription>
@@ -152,6 +204,7 @@ export const Broadcast = () => {
                   <Select
                     value={formData.device_id}
                     onValueChange={(value) => setFormData({ ...formData, device_id: value })}
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih device" />
@@ -165,6 +218,86 @@ export const Broadcast = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <Label>Penerima</Label>
+                  <Tabs defaultValue="manual" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="manual">Input Manual</TabsTrigger>
+                      <TabsTrigger value="contacts">Dari Kontak</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="manual" className="space-y-3">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="628123456789"
+                          value={currentNumber}
+                          onChange={(e) => setCurrentNumber(e.target.value)}
+                          onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addManualNumber())}
+                        />
+                        <Button type="button" onClick={addManualNumber} size="sm">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {manualNumbers.length > 0 && (
+                        <ScrollArea className="h-32 border rounded-md p-2">
+                          <div className="flex flex-wrap gap-2">
+                            {manualNumbers.map((num) => (
+                              <Badge key={num} variant="secondary" className="gap-1">
+                                {num}
+                                <X
+                                  className="w-3 h-3 cursor-pointer"
+                                  onClick={() => removeManualNumber(num)}
+                                />
+                              </Badge>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </TabsContent>
+                    <TabsContent value="contacts" className="space-y-3">
+                      <Input
+                        placeholder="Cari kontak..."
+                        value={contactSearch}
+                        onChange={(e) => setContactSearch(e.target.value)}
+                      />
+                      <ScrollArea className="h-64 border rounded-md p-3">
+                        <div className="space-y-2">
+                          {filteredContactList.map((contact) => (
+                            <div
+                              key={contact.id}
+                              className="flex items-center gap-2 p-2 hover:bg-accent rounded-md cursor-pointer"
+                              onClick={() => toggleContact(contact.phone_number)}
+                            >
+                              <Checkbox
+                                checked={selectedContacts.includes(contact.phone_number)}
+                                onCheckedChange={() => toggleContact(contact.phone_number)}
+                              />
+                              <div className="flex items-center gap-2 flex-1">
+                                {contact.is_group ? (
+                                  <Users className="w-4 h-4 text-muted-foreground" />
+                                ) : (
+                                  <div className="w-4 h-4" />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {contact.name || contact.phone_number}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {contact.phone_number}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </TabsContent>
+                  </Tabs>
+                  <p className="text-xs text-muted-foreground">
+                    Total: {manualNumbers.length + selectedContacts.length} penerima
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="message">Pesan</Label>
                   <Textarea
@@ -172,7 +305,7 @@ export const Broadcast = () => {
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     placeholder="Tulis pesan broadcast..."
-                    rows={5}
+                    rows={4}
                     required
                   />
                 </div>
