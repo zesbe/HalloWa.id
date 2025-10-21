@@ -1,4 +1,4 @@
-import { Home, Radio, Send, Bot } from "lucide-react";
+import { Home, Radio, Calendar, Bot } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +10,7 @@ export function MobileBottomNav() {
   const navItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
     { icon: Radio, label: "Device", path: "/devices" },
-    { icon: Send, label: "Broadcast", path: "/broadcast" },
+    { icon: Calendar, label: "Jadwal", path: "/scheduled" },
     { icon: Bot, label: "Chatbot", path: "/chatbot" },
   ];
 
