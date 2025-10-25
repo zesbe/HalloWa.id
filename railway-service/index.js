@@ -7,6 +7,7 @@ if (!global.crypto) {
 const { default: makeWASocket, DisconnectReason, fetchLatestBaileysVersion, Browsers, initAuthCreds, BufferJSON } = require('@whiskeysockets/baileys');
 const { createClient } = require('@supabase/supabase-js');
 const os = require('os');
+const redis = require('./redis-client');
 
 // Import handlers for QR and Pairing code
 const { handleQRCode } = require('./qr-handler');
@@ -164,21 +165,36 @@ async function startService() {
   console.log('💓 Health check ping started (every 30 seconds)');
 }
 
-// Auth state persisted in Supabase (survives Railway restarts)
+// Auth state persisted in Redis + Supabase (Redis for speed, Supabase for persistence)
 async function useSupabaseAuthState(deviceId) {
   let creds, keys;
   try {
-    const { data } = await supabase
-      .from('devices')
-      .select('session_data')
-      .eq('id', deviceId)
-      .maybeSingle();
+    // Try Redis first (faster)
+    const cachedSession = await redis.getSession(deviceId);
+    if (cachedSession) {
+      console.log('✅ Session loaded from Redis cache');
+      creds = JSON.parse(JSON.stringify(cachedSession.creds), BufferJSON.reviver);
+      keys = JSON.parse(JSON.stringify(cachedSession.keys), BufferJSON.reviver);
+    } else {
+      // Fall back to Supabase
+      const { data } = await supabase
+        .from('devices')
+        .select('session_data')
+        .eq('id', deviceId)
+        .maybeSingle();
 
-    const stored = data?.session_data || {};
-    creds = stored.creds ? JSON.parse(JSON.stringify(stored.creds), BufferJSON.reviver) : initAuthCreds();
-    keys = stored.keys ? JSON.parse(JSON.stringify(stored.keys), BufferJSON.reviver) : {};
+      const stored = data?.session_data || {};
+      creds = stored.creds ? JSON.parse(JSON.stringify(stored.creds), BufferJSON.reviver) : initAuthCreds();
+      keys = stored.keys ? JSON.parse(JSON.stringify(stored.keys), BufferJSON.reviver) : {};
+      
+      // Cache in Redis for next time
+      if (stored.creds) {
+        await redis.setSession(deviceId, { creds: stored.creds, keys: stored.keys });
+        console.log('✅ Session cached to Redis');
+      }
+    }
   } catch (e) {
-    console.error('❌ Failed loading session from Supabase:', e);
+    console.error('❌ Failed loading session:', e);
     creds = initAuthCreds();
     keys = {};
   }
@@ -189,11 +205,18 @@ async function useSupabaseAuthState(deviceId) {
       keys: JSON.parse(JSON.stringify(keys, BufferJSON.replacer)),
       saved_at: new Date().toISOString(),
     };
-    const { error } = await supabase
-      .from('devices')
-      .update({ session_data: sessionData })
-      .eq('id', deviceId);
-    if (error) console.error('❌ Failed saving session to Supabase:', error);
+    
+    // Save to both Redis and Supabase
+    await Promise.all([
+      redis.setSession(deviceId, sessionData).catch(e => console.error('Redis save error:', e)),
+      supabase
+        .from('devices')
+        .update({ session_data: sessionData })
+        .eq('id', deviceId)
+        .then(({ error }) => {
+          if (error) console.error('❌ Supabase save error:', error);
+        })
+    ]);
   };
 
   return {

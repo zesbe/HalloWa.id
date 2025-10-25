@@ -1,7 +1,9 @@
 const QRCode = require('qrcode');
+const redis = require('./redis-client');
 
 /**
  * Handle QR Code generation for WhatsApp connection
+ * QR codes are stored in Redis with 5 minute TTL
  * @param {Object} sock - WhatsApp socket instance
  * @param {Object} device - Device data from database
  * @param {Object} supabase - Supabase client
@@ -25,22 +27,25 @@ async function handleQRCode(sock, device, supabase, qr) {
     // Convert QR string to data URL
     const qrDataUrl = await QRCode.toDataURL(qr);
     
-    // Save QR to database
+    // Store QR in Redis with 5 minute TTL
+    await redis.setQRCode(device.id, qrDataUrl, 300);
+    
+    // Update status in database (but don't store QR there)
     const { error } = await supabase
       .from('devices')
       .update({ 
-        qr_code: qrDataUrl, 
         status: 'connecting', 
-        pairing_code: null 
+        pairing_code: null,
+        updated_at: new Date().toISOString()
       })
       .eq('id', device.id);
 
     if (error) {
-      console.error('❌ Error saving QR code:', error);
+      console.error('❌ Error updating status:', error);
       return false;
     }
 
-    console.log('✅ QR saved to database - scan with WhatsApp app');
+    console.log('✅ QR stored in Redis (5 min TTL) - scan with WhatsApp app');
     return true;
   } catch (error) {
     console.error('❌ Error generating QR code:', error);

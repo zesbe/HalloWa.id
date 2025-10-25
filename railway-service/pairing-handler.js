@@ -1,5 +1,8 @@
+const redis = require('./redis-client');
+
 /**
  * Handle Pairing Code generation for WhatsApp connection
+ * Pairing codes are stored in Redis with 5 minute TTL
  * Based on Baileys documentation for pairing code login
  * @param {Object} sock - WhatsApp socket instance
  * @param {Object} device - Device data from database
@@ -8,14 +11,22 @@
  * @param {Object} pairingCodeRequested - Object with timestamp to track when code was requested
  * @returns {Promise<Object>} - Returns object with handled flag and timestamp
  */
-const pairingLocks = global.pairingLocks || (global.pairingLocks = new Map());
-
 async function handlePairingCode(sock, device, supabase, readyToRequest, pairingCodeRequested) {
   try {
     // Only generate pairing code if not already registered
     if (sock.authState.creds.registered) {
       console.log('✅ Already registered, skipping pairing code generation');
       return false;
+    }
+
+    // Check Redis for existing pairing request
+    const existingTimestamp = await redis.getPairingRequest(device.id);
+    if (existingTimestamp) {
+      const timeSinceRequest = (Date.now() - existingTimestamp) / 1000;
+      if (timeSinceRequest < 50) {
+        return false; // Still fresh, don't request again
+      }
+      console.log('⏰ Previous pairing code expired, generating new one...');
     }
 
     // Allow re-requesting if previous code expired (more than 50 seconds ago)
@@ -61,21 +72,19 @@ async function handlePairingCode(sock, device, supabase, readyToRequest, pairing
     // Validate phone number format (E.164 length 10-15)
     if (!e164 || e164.length < 10 || e164.length > 15) {
       console.error('❌ Invalid phone number format:', deviceData.phone_for_pairing);
+      await redis.setPairingCode(device.id, 'Invalid phone (E.164 without +), contoh: 628123456789', 300);
       await supabase.from('devices').update({ 
         status: 'error',
-        pairing_code: 'Invalid phone (E.164 without +), contoh: 628123456789' 
+        updated_at: new Date().toISOString()
       }).eq('id', device.id);
       return { handled: false };
     }
 
     console.log('📱 Requesting pairing code for:', e164);
     
-    // Prevent concurrent pairing requests per device
-    if (pairingLocks.get(device.id)) {
-      console.log('⛔ Pairing request already in progress, skipping');
-      return { handled: false };
-    }
-    pairingLocks.set(device.id, true);
+    // Set pairing request timestamp in Redis
+    const timestamp = Date.now();
+    await redis.setPairingRequest(device.id, timestamp);
 
     // Small delay to ensure handshake ready
     if (readyToRequest) {
@@ -88,25 +97,26 @@ async function handlePairingCode(sock, device, supabase, readyToRequest, pairing
       const code = await sock.requestPairingCode(e164);
       console.log('✅ Pairing code generated successfully:', code);
       
-      // Save pairing code to database
+      // Store pairing code in Redis with 5 minute TTL
+      await redis.setPairingCode(device.id, code, 300);
+      
+      // Update status in database (but don't store code there)
       await supabase
         .from('devices')
         .update({ 
-          pairing_code: code, 
-          status: 'connecting', 
-          qr_code: null 
+          status: 'connecting',
+          updated_at: new Date().toISOString()
         })
         .eq('id', device.id);
       
-      console.log('✅ Pairing code saved to database');
+      console.log('✅ Pairing code stored in Redis (5 min TTL)');
       console.log('📱 Instructions: Open WhatsApp > Linked Devices > Link with phone number > Enter code:', code);
       console.log('⏰ Code will auto-refresh in 45 seconds');
       
       // Schedule auto-refresh after 45 seconds if not connected
       scheduleCodeRefresh(sock, device, supabase, e164);
       
-      pairingLocks.delete(device.id);
-      return { handled: true, timestamp: Date.now() };
+      return { handled: true, timestamp };
     } catch (pairErr) {
       const status = pairErr?.output?.statusCode || pairErr?.status;
       console.error('❌ Failed to generate pairing code:', status, pairErr?.message);
@@ -121,12 +131,12 @@ async function handlePairingCode(sock, device, supabase, readyToRequest, pairing
             const code = await sock.requestPairingCode(e164);
             console.log('✅ Pairing code generated (retry):', code);
             
+            await redis.setPairingCode(device.id, code, 300);
             await supabase
               .from('devices')
               .update({ 
-                pairing_code: code, 
-                status: 'connecting', 
-                qr_code: null 
+                status: 'connecting',
+                updated_at: new Date().toISOString()
               })
               .eq('id', device.id);
             
@@ -134,28 +144,31 @@ async function handlePairingCode(sock, device, supabase, readyToRequest, pairing
             scheduleCodeRefresh(sock, device, supabase, e164);
           } catch (retryErr) {
             console.error('❌ Retry failed:', retryErr?.message);
+            await redis.setPairingCode(device.id, 'Failed to generate code after retry', 60);
             await supabase.from('devices').update({ 
               status: 'error',
-              pairing_code: 'Failed to generate code after retry' 
+              updated_at: new Date().toISOString()
             }).eq('id', device.id);
           }
         }, 2000);
         
-        pairingLocks.delete(device.id);
-        return { handled: true, timestamp: Date.now() }; // Return with timestamp
+        return { handled: true, timestamp }; // Return with timestamp
       } else {
         // Other errors
+        await redis.setPairingCode(device.id, 'Failed: ' + (pairErr?.message || 'Unknown error'), 60);
         await supabase.from('devices').update({ 
           status: 'error',
-          pairing_code: 'Failed to generate code: ' + (pairErr?.message || 'Unknown error')
+          updated_at: new Date().toISOString()
         }).eq('id', device.id);
-        pairingLocks.delete(device.id);
         return { handled: false };
       }
+    } finally {
+      // Clean up pairing request tracking
+      await redis.deletePairingRequest(device.id);
     }
   } catch (error) {
     console.error('❌ Error handling pairing code:', error);
-    pairingLocks.delete(device.id);
+    await redis.deletePairingRequest(device.id);
     return { handled: false };
   }
 }
@@ -169,11 +182,6 @@ async function handlePairingCode(sock, device, supabase, readyToRequest, pairing
  * @param {string} originalPhone - Original phone number
  */
 function scheduleCodeRefresh(sock, device, supabase, originalPhone) {
-  let refreshScheduled = false;
-  
-  if (refreshScheduled) return;
-  refreshScheduled = true;
-  
   setTimeout(async () => {
     try {
       // Re-check current state before refreshing
@@ -198,12 +206,14 @@ function scheduleCodeRefresh(sock, device, supabase, originalPhone) {
         
         const newCode = await sock.requestPairingCode(refreshPhone);
         
+        // Store in Redis
+        await redis.setPairingCode(device.id, newCode, 300);
+        
         await supabase
           .from('devices')
           .update({ 
-            pairing_code: newCode, 
-            status: 'connecting', 
-            qr_code: null 
+            status: 'connecting',
+            updated_at: new Date().toISOString()
           })
           .eq('id', device.id);
         
