@@ -37,6 +37,8 @@ import { QuickTemplates } from "@/components/QuickTemplates";
 import { CSVImport } from "@/components/CSVImport";
 import { BroadcastStats } from "@/components/BroadcastStats";
 import { BroadcastSafetyWarning } from "@/components/BroadcastSafetyWarning";
+import { MessageVariables } from "@/components/MessageVariables";
+import { previewMessageVariables } from "@/utils/messageVariables";
 
 interface Broadcast {
   id: string;
@@ -80,6 +82,9 @@ export const Broadcast = () => {
     randomize_delay: true,
     batch_size: 20,
     pause_between_batches: 60,
+    var1: "",
+    var2: "",
+    var3: "",
   });
 
   useEffect(() => {
@@ -232,10 +237,20 @@ export const Broadcast = () => {
       randomize_delay: true,
       batch_size: 20,
       pause_between_batches: 60,
+      var1: "",
+      var2: "",
+      var3: "",
     });
     setManualNumbers([]);
     setSelectedContacts([]);
     setCurrentNumber("");
+  };
+
+  const handleInsertVariable = (variable: string) => {
+    setFormData(prev => ({
+      ...prev,
+      message: prev.message + variable
+    }));
   };
 
   const addManualNumber = () => {
@@ -629,6 +644,51 @@ export const Broadcast = () => {
                       />
                     </div>
 
+                    {/* Message Variables Helper */}
+                    <MessageVariables onInsert={handleInsertVariable} />
+
+                    {/* Custom Variables */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
+                      <div>
+                        <Label className="text-base font-semibold">Variabel Custom</Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Isi nilai untuk {'{var1}'}, {'{var2}'}, {'{var3}'} jika digunakan di pesan
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="var1" className="text-xs">{'{var1}'}</Label>
+                          <Input
+                            id="var1"
+                            value={formData.var1}
+                            onChange={(e) => setFormData({ ...formData, var1: e.target.value })}
+                            placeholder="Contoh: PROMO2024"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="var2" className="text-xs">{'{var2}'}</Label>
+                          <Input
+                            id="var2"
+                            value={formData.var2}
+                            onChange={(e) => setFormData({ ...formData, var2: e.target.value })}
+                            placeholder="Contoh: Premium Package"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="var3" className="text-xs">{'{var3}'}</Label>
+                          <Input
+                            id="var3"
+                            value={formData.var3}
+                            onChange={(e) => setFormData({ ...formData, var3: e.target.value })}
+                            placeholder="Contoh: 31 Des 2024"
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="file">File Media (Opsional)</Label>
                       {formData.media_url ? (
@@ -855,11 +915,11 @@ export const Broadcast = () => {
                           Preview Real-time
                         </Badge>
                         <p className="text-xs text-muted-foreground">
-                          Lihat tampilan pesan sebelum dikirim
+                          Lihat tampilan pesan dengan contoh variable
                         </p>
                       </div>
                       <WhatsAppPreview 
-                        message={formData.message}
+                        message={previewMessageVariables(formData.message)}
                         hasMedia={!!formData.media_url}
                         mediaUrl={formData.media_url}
                       />
