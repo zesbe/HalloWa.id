@@ -169,7 +169,7 @@ export type Database = {
         Row: {
           contact_count: number | null
           created_at: string
-          device_id: string
+          device_id: string | null
           group_members: Json | null
           id: string
           is_group: boolean | null
@@ -184,7 +184,7 @@ export type Database = {
         Insert: {
           contact_count?: number | null
           created_at?: string
-          device_id: string
+          device_id?: string | null
           group_members?: Json | null
           id?: string
           is_group?: boolean | null
@@ -199,7 +199,7 @@ export type Database = {
         Update: {
           contact_count?: number | null
           created_at?: string
-          device_id?: string
+          device_id?: string | null
           group_members?: Json | null
           id?: string
           is_group?: boolean | null

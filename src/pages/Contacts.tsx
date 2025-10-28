@@ -152,7 +152,7 @@ export const Contacts = () => {
 
       const { error } = await supabase.from("contacts").insert({
         user_id: user.id,
-        device_id: "",
+        device_id: null, // null for manual contacts
         name: formData.name,
         phone_number: phone,
         is_group: formData.is_group,
