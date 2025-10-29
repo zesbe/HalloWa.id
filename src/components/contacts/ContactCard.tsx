@@ -56,24 +56,24 @@ export function ContactCard({
     : null;
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all hover:border-primary/50">
-      <CardHeader className="pb-3">
+    <Card className="overflow-hidden hover:shadow-lg transition-all hover:border-primary/50 touch-manipulation">
+      <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Checkbox
               checked={selected}
               onCheckedChange={onSelect}
-              className="flex-shrink-0"
+              className="flex-shrink-0 h-5 w-5"
             />
-            <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center flex-shrink-0">
               {contact.is_group ? (
-                <Users className="w-5 h-5 text-primary" />
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               ) : (
-                <User className="w-5 h-5 text-primary" />
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <CardTitle className="text-sm truncate">
+              <CardTitle className="text-sm sm:text-base truncate">
                 {contact.name || contact.phone_number}
               </CardTitle>
               <CardDescription className="text-xs truncate">
@@ -89,13 +89,13 @@ export function ContactCard({
             </div>
           </div>
           {contact.is_group && (
-            <Badge variant="secondary" className="text-xs flex-shrink-0">
+            <Badge variant="secondary" className="text-[10px] sm:text-xs flex-shrink-0 h-5">
               Grup
             </Badge>
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-2 p-3 sm:p-6 pt-0 sm:pt-0">
         {/* Tags, Notes and Reminders */}
         <div className="space-y-1 pb-2 border-b">
           <ContactTags 
@@ -179,28 +179,28 @@ export function ContactCard({
               onClick={onSendMessage}
               variant="outline"
               size="sm"
-              className="text-xs"
+              className="text-xs h-8 sm:h-9 touch-manipulation"
             >
-              <MessageSquare className="w-3 h-3 mr-1" />
-              Kirim
+              <MessageSquare className="w-3 h-3 sm:mr-1" />
+              <span className="hidden sm:inline">Kirim</span>
             </Button>
           )}
           <Button
             onClick={onEdit}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs h-8 sm:h-9 touch-manipulation"
           >
-            <Edit className="w-3 h-3 mr-1" />
-            Edit
+            <Edit className="w-3 h-3 sm:mr-1" />
+            <span className="hidden sm:inline">Edit</span>
           </Button>
           <Button
             onClick={onDelete}
             variant="destructive"
             size="sm"
-            className="text-xs col-span-2"
+            className="text-xs col-span-2 h-8 sm:h-9 touch-manipulation"
           >
-            <Trash2 className="w-3 h-3 mr-1" />
+            <Trash2 className="w-3 h-3 sm:mr-1" />
             Hapus
           </Button>
         </div>

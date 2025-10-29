@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Trash2, Plus, Download, UserPlus, Filter } from "lucide-react";
+import { Search, Trash2, Plus, Download, UserPlus, Filter, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -284,40 +284,40 @@ export const Contacts = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">
               Manajemen Kontak
             </h1>
-            <p className="text-sm md:text-base text-muted-foreground">
+            <p className="text-xs md:text-base text-muted-foreground">
               Kelola kontak individu dan grup untuk broadcast WhatsApp
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleExportContacts} variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export
+            <Button onClick={handleExportContacts} variant="outline" size="sm" className="flex-1 sm:flex-initial">
+              <Download className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Export</span>
             </Button>
             <ContactImport onImportComplete={fetchContacts} />
             <GroupManagement onGroupCreated={fetchContacts} />
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Tambah Manual
+                <Button size="sm" className="flex-1 sm:flex-initial">
+                  <Plus className="w-4 h-4 sm:mr-2" />
+                  <span className="sm:inline">Tambah</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-h-[90vh] overflow-y-auto max-w-[95vw] sm:max-w-lg">
                 <DialogHeader>
-                  <DialogTitle>Tambah Kontak Manual</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-lg">Tambah Kontak Manual</DialogTitle>
+                  <DialogDescription className="text-sm">
                     Tambahkan kontak baru secara manual
                   </DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="basic">Info Dasar</TabsTrigger>
-                    <TabsTrigger value="variables">Variabel & Reminder</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 h-auto">
+                    <TabsTrigger value="basic" className="text-xs sm:text-sm py-2">Info Dasar</TabsTrigger>
+                    <TabsTrigger value="variables" className="text-xs sm:text-sm py-2">Variabel & Reminder</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="basic" className="space-y-4 mt-4">
@@ -421,23 +421,23 @@ export const Contacts = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Total Kontak</CardDescription>
-              <CardTitle className="text-3xl">{stats.total}</CardTitle>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="p-3 sm:pb-3 sm:p-6">
+              <CardDescription className="text-xs sm:text-sm">Total</CardDescription>
+              <CardTitle className="text-xl sm:text-3xl">{stats.total}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Kontak Individu</CardDescription>
-              <CardTitle className="text-3xl">{stats.individuals}</CardTitle>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="p-3 sm:pb-3 sm:p-6">
+              <CardDescription className="text-xs sm:text-sm">Individu</CardDescription>
+              <CardTitle className="text-xl sm:text-3xl">{stats.individuals}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Grup Kontak</CardDescription>
-              <CardTitle className="text-3xl">{stats.groups}</CardTitle>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="p-3 sm:pb-3 sm:p-6">
+              <CardDescription className="text-xs sm:text-sm">Grup</CardDescription>
+              <CardTitle className="text-xl sm:text-3xl">{stats.groups}</CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -458,29 +458,41 @@ export const Contacts = () => {
 
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-2.5 sm:top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Cari berdasarkan nama atau nomor..."
-              className="pl-10"
+              placeholder="Cari nama atau nomor..."
+              className="pl-10 h-9 sm:h-10 text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1 h-7 w-7 p-0"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
           </div>
           {selectedContacts.length > 0 && (
-            <Button onClick={handleBulkDelete} variant="destructive" size="sm">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Hapus ({selectedContacts.length})
+            <Button onClick={handleBulkDelete} variant="destructive" size="sm" className="h-9 sm:h-10">
+              <Trash2 className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Hapus ({selectedContacts.length})</span>
+              <span className="sm:hidden">({selectedContacts.length})</span>
             </Button>
           )}
         </div>
 
         {filteredContacts.length > 0 && (
-          <div className="flex items-center gap-2 p-3 bg-accent/50 rounded-lg">
+          <div className="flex items-center gap-2 p-2 sm:p-3 bg-accent/50 rounded-lg touch-manipulation">
             <Checkbox
               checked={selectedContacts.length === filteredContacts.length}
               onCheckedChange={toggleSelectAll}
+              className="h-5 w-5"
             />
-            <Label className="cursor-pointer" onClick={toggleSelectAll}>
+            <Label className="cursor-pointer text-sm flex-1" onClick={toggleSelectAll}>
               {selectedContacts.length === filteredContacts.length
                 ? `Semua ${filteredContacts.length} kontak dipilih`
                 : `Pilih Semua (${filteredContacts.length})`}
@@ -502,7 +514,7 @@ export const Contacts = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredContacts.map((contact) => (
               <ContactCard
                 key={contact.id}
@@ -519,17 +531,17 @@ export const Contacts = () => {
         )}
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto max-w-[95vw] sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Edit Kontak</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg">Edit Kontak</DialogTitle>
+              <DialogDescription className="text-sm">
                 Perbarui informasi kontak
               </DialogDescription>
             </DialogHeader>
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="basic">Info Dasar</TabsTrigger>
-                <TabsTrigger value="variables">Variabel & Reminder</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 h-auto">
+                <TabsTrigger value="basic" className="text-xs sm:text-sm py-2">Info Dasar</TabsTrigger>
+                <TabsTrigger value="variables" className="text-xs sm:text-sm py-2">Variabel & Reminder</TabsTrigger>
               </TabsList>
               
               <TabsContent value="basic" className="space-y-4 mt-4">

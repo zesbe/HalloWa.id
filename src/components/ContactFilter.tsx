@@ -14,50 +14,41 @@ interface ContactFilterProps {
 
 export function ContactFilter({ activeFilter, onFilterChange, counts }: ContactFilterProps) {
   return (
-    <div className="flex gap-2 flex-wrap">
+    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
       <Button
         variant={activeFilter === "all" ? "default" : "outline"}
-        size="sm"
         onClick={() => onFilterChange("all")}
-        className="flex-1 min-w-[100px]"
+        size="sm"
+        className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap h-9 touch-manipulation flex-shrink-0"
       >
-        <Grid className="w-4 h-4 mr-2" />
-        Semua
-        <Badge 
-          variant="secondary" 
-          className="ml-2"
-        >
+        <Grid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <span className="text-xs sm:text-sm">Semua</span>
+        <Badge variant={activeFilter === "all" ? "secondary" : "outline"} className="text-[10px] sm:text-xs h-4 sm:h-5">
           {counts.all}
         </Badge>
       </Button>
       <Button
-        variant={activeFilter === "groups" ? "default" : "outline"}
+        variant={activeFilter === "individuals" ? "default" : "outline"}
+        onClick={() => onFilterChange("individuals")}
         size="sm"
-        onClick={() => onFilterChange("groups")}
-        className="flex-1 min-w-[100px]"
+        className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap h-9 touch-manipulation flex-shrink-0"
       >
-        <Users className="w-4 h-4 mr-2" />
-        Grup
-        <Badge 
-          variant="secondary" 
-          className="ml-2"
-        >
-          {counts.groups}
+        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <span className="text-xs sm:text-sm">Individu</span>
+        <Badge variant={activeFilter === "individuals" ? "secondary" : "outline"} className="text-[10px] sm:text-xs h-4 sm:h-5">
+          {counts.individuals}
         </Badge>
       </Button>
       <Button
-        variant={activeFilter === "individuals" ? "default" : "outline"}
+        variant={activeFilter === "groups" ? "default" : "outline"}
+        onClick={() => onFilterChange("groups")}
         size="sm"
-        onClick={() => onFilterChange("individuals")}
-        className="flex-1 min-w-[100px]"
+        className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap h-9 touch-manipulation flex-shrink-0"
       >
-        <User className="w-4 h-4 mr-2" />
-        Individual
-        <Badge 
-          variant="secondary" 
-          className="ml-2"
-        >
-          {counts.individuals}
+        <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <span className="text-xs sm:text-sm">Grup</span>
+        <Badge variant={activeFilter === "groups" ? "secondary" : "outline"} className="text-[10px] sm:text-xs h-4 sm:h-5">
+          {counts.groups}
         </Badge>
       </Button>
     </div>
