@@ -167,6 +167,7 @@ export type Database = {
       }
       contacts: {
         Row: {
+          birthday: string | null
           contact_count: number | null
           created_at: string
           device_id: string | null
@@ -177,11 +178,16 @@ export type Database = {
           name: string | null
           notes: string | null
           phone_number: string
+          reminders: Json | null
           tags: string[] | null
           updated_at: string
           user_id: string
+          var1: string | null
+          var2: string | null
+          var3: string | null
         }
         Insert: {
+          birthday?: string | null
           contact_count?: number | null
           created_at?: string
           device_id?: string | null
@@ -192,11 +198,16 @@ export type Database = {
           name?: string | null
           notes?: string | null
           phone_number: string
+          reminders?: Json | null
           tags?: string[] | null
           updated_at?: string
           user_id: string
+          var1?: string | null
+          var2?: string | null
+          var3?: string | null
         }
         Update: {
+          birthday?: string | null
           contact_count?: number | null
           created_at?: string
           device_id?: string | null
@@ -207,9 +218,13 @@ export type Database = {
           name?: string | null
           notes?: string | null
           phone_number?: string
+          reminders?: Json | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string
+          var1?: string | null
+          var2?: string | null
+          var3?: string | null
         }
         Relationships: [
           {

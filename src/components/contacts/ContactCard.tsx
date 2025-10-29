@@ -2,10 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, User, Edit, Trash2, MessageSquare, Clock } from "lucide-react";
+import { Users, User, Edit, Trash2, MessageSquare, Clock, Cake, Sparkles } from "lucide-react";
 import { ContactTags } from "./ContactTags";
 import { ContactNotes } from "./ContactNotes";
-import { formatDistanceToNow } from "date-fns";
+import { ContactReminders } from "./ContactReminders";
+import { formatDistanceToNow, format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 
 interface Contact {
@@ -19,6 +20,11 @@ interface Contact {
   notes?: string | null;
   last_contacted_at?: string | null;
   contact_count?: number;
+  var1?: string | null;
+  var2?: string | null;
+  var3?: string | null;
+  birthday?: string | null;
+  reminders?: any[];
 }
 
 interface ContactCardProps {
@@ -90,19 +96,25 @@ export function ContactCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {/* Tags and Notes */}
+        {/* Tags, Notes and Reminders */}
         <div className="space-y-1 pb-2 border-b">
           <ContactTags 
             contactId={contact.id} 
             tags={tags}
             onTagsUpdate={onUpdate || (() => {})}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <ContactNotes
               contactId={contact.id}
               notes={contact.notes}
               contactName={contact.name || contact.phone_number}
               onNotesUpdate={onUpdate || (() => {})}
+            />
+            <ContactReminders
+              contactId={contact.id}
+              reminders={contact.reminders || []}
+              contactName={contact.name || contact.phone_number}
+              onRemindersUpdate={onUpdate || (() => {})}
             />
             {lastContacted && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -117,6 +129,32 @@ export function ContactCard({
             )}
           </div>
         </div>
+
+        {/* Birthday and Variables Info */}
+        {(contact.birthday || contact.var1 || contact.var2 || contact.var3) && (
+          <div className="text-xs space-y-1 pb-2 border-b bg-accent/30 p-2 rounded">
+            {contact.birthday && (
+              <div className="flex items-center gap-2">
+                <Cake className="w-3 h-3 text-primary" />
+                <span className="text-muted-foreground">Ulang tahun:</span>
+                <span className="font-medium">
+                  {format(new Date(contact.birthday), "d MMMM yyyy", { locale: localeId })}
+                </span>
+              </div>
+            )}
+            {(contact.var1 || contact.var2 || contact.var3) && (
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3 h-3 text-primary" />
+                <span className="text-muted-foreground">Variabel:</span>
+                <div className="flex gap-1 flex-wrap">
+                  {contact.var1 && <Badge variant="outline" className="text-xs">{contact.var1}</Badge>}
+                  {contact.var2 && <Badge variant="outline" className="text-xs">{contact.var2}</Badge>}
+                  {contact.var3 && <Badge variant="outline" className="text-xs">{contact.var3}</Badge>}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {contact.is_group && contact.group_members && contact.group_members.length > 0 && (
           <div className="text-xs text-muted-foreground space-y-1 pb-2 border-b">

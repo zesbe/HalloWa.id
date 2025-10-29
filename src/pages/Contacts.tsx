@@ -14,6 +14,9 @@ import { ContactImport } from "@/components/contacts/ContactImport";
 import { GroupManagement } from "@/components/contacts/GroupManagement";
 import { ContactCard } from "@/components/contacts/ContactCard";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { MessageVariables } from "@/components/MessageVariables";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Cake } from "lucide-react";
 
 interface Contact {
   id: string;
@@ -26,6 +29,11 @@ interface Contact {
   notes?: string | null;
   last_contacted_at?: string | null;
   contact_count?: number;
+  var1?: string | null;
+  var2?: string | null;
+  var3?: string | null;
+  birthday?: string | null;
+  reminders?: any[];
 }
 
 export const Contacts = () => {
@@ -44,6 +52,10 @@ export const Contacts = () => {
     name: "",
     phone_number: "",
     is_group: false,
+    var1: "",
+    var2: "",
+    var3: "",
+    birthday: "",
   });
 
   useEffect(() => {
@@ -93,8 +105,8 @@ export const Contacts = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setContacts(data || []);
-      setFilteredContacts(data || []);
+      setContacts(data as Contact[] || []);
+      setFilteredContacts(data as Contact[] || []);
     } catch (error: any) {
       toast.error("Gagal memuat kontak");
     } finally {
@@ -156,13 +168,17 @@ export const Contacts = () => {
         name: formData.name,
         phone_number: phone,
         is_group: formData.is_group,
+        var1: formData.var1 || null,
+        var2: formData.var2 || null,
+        var3: formData.var3 || null,
+        birthday: formData.birthday || null,
       });
 
       if (error) throw error;
 
       toast.success("Kontak berhasil ditambahkan");
       setAddDialogOpen(false);
-      setFormData({ name: "", phone_number: "", is_group: false });
+      setFormData({ name: "", phone_number: "", is_group: false, var1: "", var2: "", var3: "", birthday: "" });
       fetchContacts();
     } catch (error: any) {
       toast.error(error.message);
@@ -185,6 +201,10 @@ export const Contacts = () => {
           name: formData.name,
           phone_number: phone,
           is_group: formData.is_group,
+          var1: formData.var1 || null,
+          var2: formData.var2 || null,
+          var3: formData.var3 || null,
+          birthday: formData.birthday || null,
         })
         .eq("id", currentContact.id);
 
@@ -193,7 +213,7 @@ export const Contacts = () => {
       toast.success("Kontak berhasil diperbarui");
       setEditDialogOpen(false);
       setCurrentContact(null);
-      setFormData({ name: "", phone_number: "", is_group: false });
+      setFormData({ name: "", phone_number: "", is_group: false, var1: "", var2: "", var3: "", birthday: "" });
       fetchContacts();
     } catch (error: any) {
       toast.error(error.message);
@@ -206,6 +226,10 @@ export const Contacts = () => {
       name: contact.name || "",
       phone_number: contact.phone_number,
       is_group: contact.is_group,
+      var1: contact.var1 || "",
+      var2: contact.var2 || "",
+      var3: contact.var3 || "",
+      birthday: contact.birthday || "",
     });
     setEditDialogOpen(true);
   };
@@ -290,45 +314,108 @@ export const Contacts = () => {
                     Tambahkan kontak baru secara manual
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleAddContact} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nama</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="John Doe"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Nomor Telepon</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone_number}
-                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                      placeholder="08123456789 atau 628123456789"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Format: 08xxx atau 628xxx (otomatis dinormalisasi)
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="is_group"
-                      checked={formData.is_group}
-                      onCheckedChange={(checked) =>
-                        setFormData({ ...formData, is_group: checked as boolean })
-                      }
-                    />
-                    <Label htmlFor="is_group">Ini adalah grup</Label>
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Tambah Kontak
-                  </Button>
-                </form>
+                <Tabs defaultValue="basic" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="basic">Info Dasar</TabsTrigger>
+                    <TabsTrigger value="variables">Variabel & Reminder</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="basic" className="space-y-4 mt-4">
+                    <form onSubmit={handleAddContact} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Nama</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="John Doe"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Nomor Telepon</Label>
+                        <Input
+                          id="phone"
+                          value={formData.phone_number}
+                          onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                          placeholder="08123456789 atau 628123456789"
+                          required
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Format: 08xxx atau 628xxx (otomatis dinormalisasi)
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="is_group"
+                          checked={formData.is_group}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, is_group: checked as boolean })
+                          }
+                        />
+                        <Label htmlFor="is_group">Ini adalah grup</Label>
+                      </div>
+                      <Button type="submit" className="w-full">
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Tambah Kontak
+                      </Button>
+                    </form>
+                  </TabsContent>
+                  
+                  <TabsContent value="variables" className="space-y-4 mt-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="birthday" className="flex items-center gap-2">
+                          <Cake className="w-4 h-4" />
+                          Tanggal Ulang Tahun
+                        </Label>
+                        <Input
+                          id="birthday"
+                          type="date"
+                          value={formData.birthday}
+                          onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Untuk reminder otomatis ulang tahun
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="var1">Variabel Custom 1</Label>
+                        <Input
+                          id="var1"
+                          value={formData.var1}
+                          onChange={(e) => setFormData({ ...formData, var1: e.target.value })}
+                          placeholder="Contoh: PROMO2024, Gold Member"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="var2">Variabel Custom 2</Label>
+                        <Input
+                          id="var2"
+                          value={formData.var2}
+                          onChange={(e) => setFormData({ ...formData, var2: e.target.value })}
+                          placeholder="Contoh: Premium Package"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="var3">Variabel Custom 3</Label>
+                        <Input
+                          id="var3"
+                          value={formData.var3}
+                          onChange={(e) => setFormData({ ...formData, var3: e.target.value })}
+                          placeholder="Contoh: 31 Desember 2024"
+                        />
+                      </div>
+                      
+                      <MessageVariables onInsert={(text) => {
+                        // Info only - showing how variables work
+                      }} />
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </DialogContent>
             </Dialog>
           </div>
@@ -439,41 +526,104 @@ export const Contacts = () => {
                 Perbarui informasi kontak
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleEditContact} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Nama</Label>
-                <Input
-                  id="edit-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-phone">Nomor Telepon</Label>
-                <Input
-                  id="edit-phone"
-                  value={formData.phone_number}
-                  onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                  placeholder="628123456789"
-                  required
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="edit-is_group"
-                  checked={formData.is_group}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_group: checked as boolean })
-                  }
-                />
-                <Label htmlFor="edit-is_group">Ini adalah grup</Label>
-              </div>
-              <Button type="submit" className="w-full">
-                Update Kontak
-              </Button>
-            </form>
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">Info Dasar</TabsTrigger>
+                <TabsTrigger value="variables">Variabel & Reminder</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="space-y-4 mt-4">
+                <form onSubmit={handleEditContact} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name">Nama</Label>
+                    <Input
+                      id="edit-name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="John Doe"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-phone">Nomor Telepon</Label>
+                    <Input
+                      id="edit-phone"
+                      value={formData.phone_number}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                      placeholder="628123456789"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="edit-is_group"
+                      checked={formData.is_group}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, is_group: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="edit-is_group">Ini adalah grup</Label>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Update Kontak
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="variables" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-birthday" className="flex items-center gap-2">
+                      <Cake className="w-4 h-4" />
+                      Tanggal Ulang Tahun
+                    </Label>
+                    <Input
+                      id="edit-birthday"
+                      type="date"
+                      value={formData.birthday}
+                      onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Untuk reminder otomatis ulang tahun
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-var1">Variabel Custom 1</Label>
+                    <Input
+                      id="edit-var1"
+                      value={formData.var1}
+                      onChange={(e) => setFormData({ ...formData, var1: e.target.value })}
+                      placeholder="Contoh: PROMO2024, Gold Member"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-var2">Variabel Custom 2</Label>
+                    <Input
+                      id="edit-var2"
+                      value={formData.var2}
+                      onChange={(e) => setFormData({ ...formData, var2: e.target.value })}
+                      placeholder="Contoh: Premium Package"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-var3">Variabel Custom 3</Label>
+                    <Input
+                      id="edit-var3"
+                      value={formData.var3}
+                      onChange={(e) => setFormData({ ...formData, var3: e.target.value })}
+                      placeholder="Contoh: 31 Desember 2024"
+                    />
+                  </div>
+                  
+                  <MessageVariables onInsert={(text) => {
+                    // Info only - showing how variables work
+                  }} />
+                </div>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
