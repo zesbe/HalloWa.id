@@ -422,28 +422,141 @@ Content-Type: application/json`} />
 
             <EndpointCard
               method="GET"
-              endpoint={`${baseUrl}/rest/v1/devices`}
-              description="Ambil daftar device"
+              endpoint={`${baseUrl}/functions/v1/api-device-management`}
+              description="Ambil daftar semua device WhatsApp"
               response={`{
+  "success": true,
   "data": [
     {
       "id": "device_123",
       "device_name": "WhatsApp Bisnis 1",
       "status": "connected",
       "phone_number": "628123456789",
+      "webhook_url": "https://yourapp.com/webhook",
+      "created_at": "2025-01-28T10:00:00Z",
       "last_connected_at": "2025-01-28T10:30:00Z"
     }
-  ]
+  ],
+  "count": 1
 }`}
-              example={`curl -X GET ${baseUrl}/rest/v1/devices \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "apikey: YOUR_SUPABASE_ANON_KEY"`}
+              example={`curl -X GET ${baseUrl}/functions/v1/api-device-management \\
+  -H "x-api-key: YOUR_API_KEY"`}
+            />
+
+            <EndpointCard
+              method="GET"
+              endpoint={`${baseUrl}/functions/v1/api-device-management/{device_id}`}
+              description="Dapatkan detail device tertentu"
+              parameters={[
+                { name: "device_id", type: "string", required: true, description: "ID device yang ingin diambil" },
+              ]}
+              response={`{
+  "success": true,
+  "data": {
+    "id": "device_123",
+    "device_name": "WhatsApp Bisnis 1",
+    "status": "connected",
+    "phone_number": "628123456789",
+    "webhook_url": "https://yourapp.com/webhook",
+    "session_data": { ... },
+    "created_at": "2025-01-28T10:00:00Z"
+  }
+}`}
+              example={`curl -X GET ${baseUrl}/functions/v1/api-device-management/device_123 \\
+  -H "x-api-key: YOUR_API_KEY"`}
+            />
+
+            <EndpointCard
+              method="POST"
+              endpoint={`${baseUrl}/functions/v1/api-device-management`}
+              description="Buat device WhatsApp baru"
+              parameters={[
+                { name: "device_name", type: "string", required: true, description: "Nama device" },
+                { name: "webhook_url", type: "string", required: false, description: "URL webhook untuk notifikasi" },
+              ]}
+              response={`{
+  "success": true,
+  "data": {
+    "id": "device_456",
+    "device_name": "WhatsApp Bisnis 2",
+    "status": "disconnected",
+    "created_at": "2025-01-28T11:00:00Z"
+  }
+}`}
+              example={`curl -X POST ${baseUrl}/functions/v1/api-device-management \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "device_name": "WhatsApp Bisnis 2",
+    "webhook_url": "https://yourapp.com/webhook"
+  }'`}
+            />
+
+            <EndpointCard
+              method="PUT"
+              endpoint={`${baseUrl}/functions/v1/api-device-management/{device_id}`}
+              description="Update device WhatsApp"
+              parameters={[
+                { name: "device_id", type: "string", required: true, description: "ID device yang akan diupdate" },
+                { name: "device_name", type: "string", required: false, description: "Nama device baru" },
+                { name: "webhook_url", type: "string", required: false, description: "URL webhook baru" },
+              ]}
+              response={`{
+  "success": true,
+  "data": {
+    "id": "device_123",
+    "device_name": "WhatsApp Bisnis Updated",
+    "webhook_url": "https://newurl.com/webhook",
+    "updated_at": "2025-01-28T11:30:00Z"
+  }
+}`}
+              example={`curl -X PUT ${baseUrl}/functions/v1/api-device-management/device_123 \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "device_name": "WhatsApp Bisnis Updated"
+  }'`}
+            />
+
+            <EndpointCard
+              method="DELETE"
+              endpoint={`${baseUrl}/functions/v1/api-device-management/{device_id}`}
+              description="Hapus device WhatsApp"
+              parameters={[
+                { name: "device_id", type: "string", required: true, description: "ID device yang akan dihapus" },
+              ]}
+              response={`{
+  "success": true,
+  "message": "Device deleted successfully"
+}`}
+              example={`curl -X DELETE ${baseUrl}/functions/v1/api-device-management/device_123 \\
+  -H "x-api-key: YOUR_API_KEY"`}
+            />
+
+            <EndpointCard
+              method="POST"
+              endpoint={`${baseUrl}/functions/v1/api-device-management/{device_id}/logout`}
+              description="Logout device WhatsApp (hapus session)"
+              parameters={[
+                { name: "device_id", type: "string", required: true, description: "ID device yang akan di-logout" },
+              ]}
+              response={`{
+  "success": true,
+  "message": "Device logged out successfully",
+  "data": {
+    "id": "device_123",
+    "status": "disconnected",
+    "phone_number": null
+  }
+}`}
+              example={`curl -X POST ${baseUrl}/functions/v1/api-device-management/device_123/logout \\
+  -H "x-api-key: YOUR_API_KEY"`}
             />
 
             <EndpointCard
               method="GET"
               endpoint={`${baseUrl}/functions/v1/get-device-qr`}
-              description="Dapatkan QR code untuk pairing device"
+              description="Dapatkan QR code untuk pairing device (Deprecated: Gunakan UI di web app)"
               parameters={[
                 { name: "device_id", type: "string", required: true, description: "ID device yang akan di-pair" },
               ]}

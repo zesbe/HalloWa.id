@@ -22,6 +22,8 @@ interface AutoPostSchedule {
   schedule_time: string;
   is_active: boolean;
   created_at: string;
+  device_id: string;
+  user_id: string;
 }
 
 interface Contact {
@@ -67,8 +69,26 @@ export default function AutoPost() {
   };
 
   const fetchSchedules = async () => {
-    // Placeholder - akan diimplementasi dengan table baru
-    setSchedules([]);
+    try {
+      const { data, error } = await supabase
+        .from("auto_post_schedules")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      // Transform data to match interface
+      const transformedData = (data || []).map((item: any) => ({
+        ...item,
+        target_groups: Array.isArray(item.target_groups) 
+          ? item.target_groups 
+          : []
+      }));
+      
+      setSchedules(transformedData);
+    } catch (error: any) {
+      toast.error("Gagal memuat jadwal");
+    }
   };
 
   const handleToggleGroup = (groupId: string) => {
@@ -89,11 +109,54 @@ export default function AutoPost() {
     }
 
     if (formData.target_groups.length === 0) {
-      toast.error("Pilih minimal 1 grup");
+      toast.error("Pilih minimal 1 grup WhatsApp");
       return;
     }
 
-    toast.info("Fitur auto-post akan segera hadir! Database sedang disiapkan.");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      // Get first device (or let user select later)
+      const { data: devices } = await supabase
+        .from("devices")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1);
+
+      if (!devices || devices.length === 0) {
+        toast.error("Anda harus menghubungkan device terlebih dahulu");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("auto_post_schedules")
+        .insert({
+          user_id: user.id,
+          device_id: devices[0].id,
+          name: formData.name,
+          message: formData.message,
+          target_groups: formData.target_groups,
+          frequency: formData.frequency,
+          schedule_time: formData.schedule_time,
+          is_active: formData.is_active,
+        });
+
+      if (error) throw error;
+
+      toast.success("Jadwal auto post berhasil dibuat!");
+      setFormData({
+        name: "",
+        message: "",
+        target_groups: [],
+        frequency: "daily",
+        schedule_time: "09:00",
+        is_active: true,
+      });
+      fetchSchedules();
+    } catch (error: any) {
+      toast.error(error.message || "Gagal membuat jadwal");
+    }
   };
 
   const stats = {

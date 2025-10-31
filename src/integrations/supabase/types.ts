@@ -50,6 +50,60 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_post_schedules: {
+        Row: {
+          created_at: string
+          device_id: string
+          frequency: string
+          id: string
+          is_active: boolean | null
+          last_sent_at: string | null
+          media_url: string | null
+          message: string
+          name: string
+          next_send_at: string | null
+          schedule_days: number[] | null
+          schedule_time: string
+          target_groups: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          last_sent_at?: string | null
+          media_url?: string | null
+          message: string
+          name: string
+          next_send_at?: string | null
+          schedule_days?: number[] | null
+          schedule_time: string
+          target_groups?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          last_sent_at?: string | null
+          media_url?: string | null
+          message?: string
+          name?: string
+          next_send_at?: string | null
+          schedule_days?: number[] | null
+          schedule_time?: string
+          target_groups?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       broadcasts: {
         Row: {
           batch_size: number | null

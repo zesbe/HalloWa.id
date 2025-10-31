@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.get-device-qr]
 verify_jwt = true
+
+[functions.api-device-management]
+verify_jwt = false
