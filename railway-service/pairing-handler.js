@@ -107,6 +107,9 @@ async function handlePairingCode(sock, device, supabase, readyToRequest, pairing
       const code = await sock.requestPairingCode(e164);
       console.log('✅ Pairing code generated successfully:', code);
       
+      // Format code with dashes for better readability (XXXX-XXXX)
+      const formattedCode = code.replace(/(.{4})(?=.)/g, '$1-');
+      
       // Store pairing code in Redis with 10 minute TTL for better stability
       await redis.setPairingCode(device.id, code, 600);
       
@@ -120,7 +123,7 @@ async function handlePairingCode(sock, device, supabase, readyToRequest, pairing
         .eq('id', device.id);
       
       console.log('✅ Pairing code stored in Redis (10 min TTL)');
-      console.log('📱 Instructions: Open WhatsApp > Linked Devices > Link with phone number > Enter code:', code);
+      console.log('📱 Instructions: Open WhatsApp > Linked Devices > Link with phone number > Enter code:', formattedCode);
       console.log('⏰ Code will auto-refresh in 8 minutes');
       
       // Schedule auto-refresh after 8 minutes (480s) - giving 2min buffer before expiry
