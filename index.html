@@ -101,7 +101,26 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Initial SEO content - will be replaced by React -->
+      <main style="padding: 2rem; text-align: center; font-family: system-ui, -apple-system, sans-serif;">
+        <h1 style="color: #10b981; font-size: 2rem; margin-bottom: 1rem;">HalloWa - WhatsApp Bot Marketing Platform</h1>
+        <p style="color: #6b7280; max-width: 600px; margin: 0 auto;">Platform WhatsApp Bot Marketing profesional untuk kelola multiple devices, broadcast messages, chatbot automation dalam satu platform terpadu</p>
+        <div style="margin-top: 2rem;">
+          <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #10b981; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        </div>
+      </main>
+      <style>
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      </style>
+      <noscript>
+        <div style="padding: 2rem; text-align: center; background: #fef2f2; color: #991b1b; border-radius: 8px; margin: 2rem;">
+          <strong>JavaScript Required:</strong> Please enable JavaScript to use HalloWa platform.
+        </div>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
