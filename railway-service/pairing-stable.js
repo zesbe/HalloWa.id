@@ -291,12 +291,6 @@ class StablePairing {
     }
     return count;
   }
-   * Clear all pairing data
-   */
-  clearAll() {
-    this.activeCodes.clear();
-    console.log('All pairing data cleared');
-  }
 }
 
 // Export single instance
