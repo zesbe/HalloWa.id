@@ -11,10 +11,10 @@ const redis = require('./redis-client');
 
 // Import handlers for QR and Pairing code
 const { handleQRCode } = require('./qr-handler');
-const PairingHandler = require('./pairing-enhanced');
+const PairingFix = require('./pairing-fix');
 
-// Initialize pairing handler
-const pairingHandler = new PairingHandler(redis);
+// Initialize pairing handler with fixed implementation
+const pairingHandler = new PairingFix(redis);
 
 // Supabase config dari environment variables
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -289,23 +289,9 @@ async function connectWhatsApp(device, isRecovery = false) {
 
     activeSockets.set(device.id, sock);
 
-    // Track pairing code request status with timestamp
-    let pairingCodeRequested = null;
+    // Initialize pairing mode if configured
+    const isPairingMode = await pairingHandler.initPairingMode(sock, device, supabase);
     let pairingAttempted = false;
-    let pairingMode = false; // Track if we're in pairing mode
-
-    // Check if device is configured for pairing
-    const { data: deviceConfig } = await supabase
-      .from('devices')
-      .select('connection_method, phone_for_pairing')
-      .eq('id', device.id)
-      .single();
-    
-    pairingMode = deviceConfig?.connection_method === 'pairing' && !!deviceConfig?.phone_for_pairing;
-    
-    if (pairingMode) {
-      console.log('🔑 Pairing mode enabled for device:', device.device_name);
-    }
 
     // Handle connection updates
     sock.ev.on('connection.update', async (update) => {
@@ -321,64 +307,27 @@ async function connectWhatsApp(device, isRecovery = false) {
       // IMPORTANT: Only generate QR/pairing if NOT in recovery mode AND not registered
       if (!sock.authState.creds.registered && !isRecovery) {
         try {
-          // If in pairing mode, handle pairing ONLY
-          if (pairingMode && !pairingAttempted) {
-            // Wait for connection to be ready (connecting state or QR event)
-            const readyToRequest = connection === 'connecting' || !!qr;
+          // Handle pairing if configured
+          if (isPairingMode && !pairingAttempted) {
+            const result = await pairingHandler.handlePairing(sock, device, supabase, update);
             
-            console.log(`📱 Pairing mode check:`, {
-              readyToRequest,
-              connection,
-              pairingAttempted,
-              hasQR: !!qr,
-              pairingMode
-            });
-
-            if (readyToRequest && !pairingAttempted) {
-              console.log('🔐 Attempting pairing code generation...');
-              
-              // Use enhanced pairing handler
-              const result = await pairingHandler.generatePairingCode(sock, device, supabase);
-              pairingAttempted = true; // Mark as attempted regardless of result
-              
-              if (result?.success) {
-                pairingCodeRequested = { 
-                  timestamp: Date.now(),
-                  code: result.formattedCode 
-                };
-                console.log('✅ Pairing code ready for WhatsApp notification');
-                
-                // Don't generate QR when pairing is successful
-                return;
-              } else {
-                console.log(`⚠️ Pairing failed: ${result.reason}`);
-                if (result.reason === 'socket_not_ready') {
-                  // Retry after delay
-                  pairingAttempted = false;
-                  setTimeout(async () => {
-                    if (!sock.authState?.creds?.registered) {
-                      console.log('🔄 Retrying pairing...');
-                      const retry = await pairingHandler.generatePairingCode(sock, device, supabase);
-                      if (retry?.success) {
-                        pairingCodeRequested = { 
-                          timestamp: Date.now(),
-                          code: retry.formattedCode 
-                        };
-                      }
-                    }
-                  }, 3000);
-                }
-                // Continue to allow potential QR fallback if configured
-              }
+            if (result.handled) {
+              pairingAttempted = true;
+              // Don't generate QR when pairing is handled
+              return;
+            } else if (result.error === 'max_attempts') {
+              // Max attempts reached, fall back to QR if available
+              console.log('⚠️ Pairing max attempts reached, falling back to QR if available');
+              pairingAttempted = true;
             }
           }
           
-          // QR method - only if NOT in pairing mode
-          if (qr && !pairingMode) {
+          // QR method - only if NOT in pairing mode or pairing failed
+          if (qr && (!isPairingMode || pairingAttempted)) {
             console.log('📷 QR mode - generating QR code...');
             await handleQRCode(sock, device, supabase, qr);
-          } else if (qr && pairingMode) {
-            console.log('⛔ Skipping QR generation - device is in pairing mode');
+          } else if (qr && isPairingMode && !pairingAttempted) {
+            console.log('⛔ Skipping QR - waiting for pairing to complete');
           }
         } catch (error) {
           console.error('❌ Error generating QR/pairing code:', error);
