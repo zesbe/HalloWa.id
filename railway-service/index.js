@@ -11,7 +11,7 @@ const redis = require('./redis-client');
 
 // Import handlers for QR and Pairing code
 const { handleQRCode } = require('./qr-handler');
-const { handlePairingCode } = require('./pairing-handler');
+const stablePairingHandler = require('./pairing-handler-stable');
 
 // Supabase config dari environment variables
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -50,6 +50,9 @@ async function startService() {
   console.log('🚀 WhatsApp Baileys Service Started');
   console.log('📡 Using polling mechanism (optimized intervals)');
   console.log('🔗 Supabase URL:', supabaseUrl);
+  
+  // Clear any stale pairing sessions on startup
+  stablePairingHandler.clearAll();
 
   // Function to check devices
   async function checkDevices() {
@@ -338,11 +341,11 @@ async function connectWhatsApp(device, isRecovery = false) {
                 .single();
               
               if (deviceData?.phone_for_pairing) {
-                const result = await handlePairingCode(sock, device, supabase, true, pairingCodeRequested);
+                const success = await stablePairingHandler.generatePairingCode(sock, device, supabase);
                 pairingAttempted = true; // Mark as attempted regardless of result
                 
-                if (result?.handled) {
-                  pairingCodeRequested = { timestamp: result.timestamp };
+                if (success) {
+                  pairingCodeRequested = { timestamp: Date.now() };
                   console.log('✅ Pairing code generated successfully');
                   // Don't generate QR when pairing is successful
                   return;
@@ -420,6 +423,9 @@ async function connectWhatsApp(device, isRecovery = false) {
         console.log('🧾 Error message:', message);
 
         activeSockets.delete(device.id);
+        
+        // Clean up pairing sessions on disconnect
+        stablePairingHandler.clearDevice(device.id);
 
         try {
           // Respect user-initiated cancel: do nothing if already disconnected
