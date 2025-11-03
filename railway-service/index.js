@@ -218,6 +218,11 @@ async function handleConnectionUpdate(sock, device, update, isPairing, saveCreds
       console.log('🔌 Disconnected:', device.device_name);
       activeSockets.delete(device.id);
       
+      // Reset pairing attempts on disconnect
+      if (isPairing) {
+        multiDevicePairing.resetDeviceAttempts(device.id);
+      }
+      
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
       if (shouldReconnect && !isShuttingDown) {
         console.log('🔄 Will reconnect in 5 seconds...');

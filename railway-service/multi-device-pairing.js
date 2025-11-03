@@ -60,22 +60,48 @@ class MultiDevicePairing {
       }
 
       // Track pairing attempts per device
-      const attempts = this.pairingAttempts.get(deviceId) || 0;
-      if (attempts >= 3) {
-        console.error(`❌ [${deviceName}] Max pairing attempts reached (3)`);
-        
-        // Reset attempts after 60 seconds
-        setTimeout(() => {
+      let attempts = this.pairingAttempts.get(deviceId);
+      
+      // Check if we should reset attempts (after 60 seconds)
+      if (attempts && attempts.lastAttempt) {
+        const timeSinceLastAttempt = Date.now() - attempts.lastAttempt;
+        if (timeSinceLastAttempt > 60000) {
+          console.log(`🔄 [${deviceName}] Resetting attempts counter (been ${Math.floor(timeSinceLastAttempt/1000)}s)`);
+          attempts = null;
           this.pairingAttempts.delete(deviceId);
-        }, 60000);
-        
-        return null;
+        }
+      }
+      
+      // Initialize or get current attempts
+      if (!attempts) {
+        attempts = { count: 0, lastAttempt: Date.now() };
+      }
+      
+      if (attempts.count >= 3) {
+        const timeSinceLastAttempt = Date.now() - attempts.lastAttempt;
+        if (timeSinceLastAttempt < 60000) {
+          console.error(`❌ [${deviceName}] Max attempts reached. Wait ${Math.ceil((60000 - timeSinceLastAttempt)/1000)}s`);
+          return null;
+        }
+        // Reset if been more than 60 seconds
+        attempts.count = 0;
       }
 
       // Increment attempt counter
-      this.pairingAttempts.set(deviceId, attempts + 1);
+      attempts.count++;
+      attempts.lastAttempt = Date.now();
+      this.pairingAttempts.set(deviceId, attempts);
       
-      console.log(`📱 [${deviceName}] Pairing attempt ${attempts + 1}/3 for phone: ${phoneNumber}`);
+      console.log(`📱 [${deviceName}] Pairing attempt ${attempts.count}/3 for phone: ${phoneNumber}`);
+      
+      // Validate socket is ready
+      if (!sock || typeof sock.requestPairingCode !== 'function') {
+        console.error(`❌ [${deviceName}] Socket not ready for pairing`);
+        // Don't count this as an attempt
+        attempts.count--;
+        this.pairingAttempts.set(deviceId, attempts);
+        return null;
+      }
       
       // Add delay to ensure socket is ready
       await this.delay(2000);
@@ -90,12 +116,9 @@ class MultiDevicePairing {
         console.error(`❌ [${deviceName}] Failed to request pairing code:`, err.message);
         
         if (err.message?.includes('rate')) {
-          console.log(`⏳ [${deviceName}] Rate limited - please wait 1 minute`);
-          
-          // Clear attempts after rate limit
-          setTimeout(() => {
-            this.pairingAttempts.delete(deviceId);
-          }, 60000);
+          console.log(`⏳ [${deviceName}] Rate limited - resetting attempts counter`);
+          // Reset attempts immediately on rate limit
+          this.pairingAttempts.delete(deviceId);
         }
         
         return null;
@@ -325,6 +348,31 @@ class MultiDevicePairing {
       });
     }
     return info;
+  }
+
+  /**
+   * Reset attempts for a specific device
+   */
+  resetDeviceAttempts(deviceId) {
+    if (this.pairingAttempts.has(deviceId)) {
+      this.pairingAttempts.delete(deviceId);
+      console.log(`🔄 Attempts reset for device: ${deviceId}`);
+    }
+  }
+
+  /**
+   * Clear all pairing data (for debugging)
+   */
+  clearAll() {
+    // Clear all sessions
+    for (const [deviceId, session] of this.pairingSessions) {
+      if (session.monitorInterval) {
+        clearInterval(session.monitorInterval);
+      }
+    }
+    this.pairingSessions.clear();
+    this.pairingAttempts.clear();
+    console.log('🧹 All pairing data cleared');
   }
 }
 
