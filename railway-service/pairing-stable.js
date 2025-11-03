@@ -33,15 +33,14 @@ class StablePairing {
         return null;
       }
 
-      // Step 3: Check if we have a recent code
-      const existingCode = this.activeCodes.get(deviceId);
-      if (existingCode && (Date.now() - existingCode.timestamp < 30000)) {
-        console.log(`[${deviceName}] Reusing existing code: ${existingCode.code}`);
-        return existingCode.code;
+      // Step 3: Skip reusing codes - always generate fresh
+      // Clear any existing code to prevent cache issues
+      if (this.activeCodes.has(deviceId)) {
+        console.log(`[${deviceName}] Clearing old cached code`);
+        this.activeCodes.delete(deviceId);
       }
 
-      // Step 4: Clear any old code
-      this.activeCodes.delete(deviceId);
+      // Step 4: Already cleared in step 3
 
       // Step 5: Wait for socket to stabilize
       console.log(`[${deviceName}] Preparing to request pairing code...`);
@@ -115,11 +114,11 @@ class StablePairing {
       // Step 9: Print instructions
       this.printInstructions(deviceName, phoneNumber, formattedCode);
 
-      // Step 10: Auto cleanup after 5 minutes
+      // Step 10: Auto cleanup after 1 minute
       setTimeout(() => {
         this.activeCodes.delete(deviceId);
         console.log(`[${deviceName}] Pairing code expired and cleaned up`);
-      }, 300000);
+      }, 60000);
 
       return formattedCode;
 
@@ -275,11 +274,23 @@ class StablePairing {
    * Clear device pairing data
    */
   clearDevice(deviceId) {
-    this.activeCodes.delete(deviceId);
-    console.log(`Cleared pairing data for device: ${deviceId}`);
+    if (this.activeCodes.has(deviceId)) {
+      console.log(`Cleared pairing data for device: ${deviceId}`);
+      this.activeCodes.delete(deviceId);
+    }
   }
 
   /**
+   * Clear all cached pairing codes
+   */
+  clearAll() {
+    const count = this.activeCodes.size;
+    this.activeCodes.clear();
+    if (count > 0) {
+      console.log(`🧹 Cleared ${count} cached pairing codes`);
+    }
+    return count;
+  }
    * Clear all pairing data
    */
   clearAll() {

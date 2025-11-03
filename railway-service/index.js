@@ -43,6 +43,8 @@ const { handleQRCode } = require('./qr-handler');
 const stablePairing = require('./pairing-stable');
 
 // Stable pairing handler - works like QR but with pairing codes
+// Clear any cached codes on startup
+stablePairing.clearAll();
 
 // Supabase config
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -185,15 +187,21 @@ async function handleConnectionUpdate(sock, device, update, isPairing, saveCreds
     // Handle pairing or QR
     if (!sock.authState?.creds?.registered) {
       if (isPairing) {
-        // Handle pairing - only once per connection
+        // Handle pairing - only once per connection attempt
         if (!sock.pairingAttempted) {
           sock.pairingAttempted = true;
           console.log('🔐 Attempting pairing...');
+          
+          // Small delay to ensure socket is ready
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           const code = await stablePairing.generateCode(sock, device, supabase);
           if (code) {
             console.log(`✅ Pairing code generated: ${code}`);
           } else {
             console.log('❌ Pairing failed - check device error message');
+            // Reset flag on failure to allow retry
+            sock.pairingAttempted = false;
           }
         }
       } else if (qr) {
@@ -224,8 +232,11 @@ async function handleConnectionUpdate(sock, device, update, isPairing, saveCreds
       // Clear pairing data on disconnect
       if (isPairing) {
         stablePairing.clearDevice(device.id);
-        sock.pairingAttempted = false; // Reset flag for next connection
       }
+      
+      // Always reset flags on disconnect
+      sock.pairingAttempted = false;
+      sock.hasConnected = false;
       
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
       if (shouldReconnect && !isShuttingDown) {
