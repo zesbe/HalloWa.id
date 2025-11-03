@@ -253,7 +253,7 @@ async function connectWhatsApp(device, isRecovery = false) {
       version,
       auth: state,
       printQRInTerminal: false, // We'll handle QR ourselves
-      browser: Browsers.macOS('Chrome'), // Use macOS Chrome for better pairing support
+      browser: ['HalloWa', '', ''], // Custom browser name shown in WhatsApp
       connectTimeoutMs: 60_000,
       keepAliveIntervalMs: 10_000,
       syncFullHistory: false,
