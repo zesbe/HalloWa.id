@@ -36,8 +36,11 @@ export const processMessageVariables = (
   // Replace [[NAME]] with WhatsApp contact name (or phone if name not available)
   processed = processed.replace(/\[\[NAME\]\]/g, contact.name || contact.phone_number);
 
+  // Replace {{NAME}} with contact name (uppercase version)
+  processed = processed.replace(/\{\{NAME\}\}/g, contact.name || contact.phone_number);
+
   // Replace {nama} and {{nama}} with contact name from Supabase database
-  processed = processed.replace(/\{\{?nama\}\}?/g, contact.name || contact.phone_number);
+  processed = processed.replace(/\{\{?nama\}\}?/gi, contact.name || contact.phone_number);
 
   // Replace {nomor} with phone number
   processed = processed.replace(/\{nomor\}/g, contact.phone_number);

@@ -52,6 +52,15 @@ export const MessageVariablesEnhanced = ({ onInsert, className }: MessageVariabl
       category: "contact"
     },
     {
+      code: "{{NAME}}",
+      label: "Nama Kontak (Alt)",
+      description: "Nama dari database Supabase",
+      example: "Hai {{NAME}}, apa kabar?",
+      icon: Database,
+      color: "from-blue-600 to-indigo-700",
+      category: "contact"
+    },
+    {
       code: "{nama}",
       label: "Nama Kontak",
       description: "Nama kontak dari database",
@@ -302,7 +311,7 @@ export const MessageVariablesEnhanced = ({ onInsert, className }: MessageVariabl
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600 dark:text-blue-400">•</span>
-                  <span>{`{nama}, {var1}, {var2}, {var3} diambil dari tabel contacts`}</span>
+                  <span>{`{{NAME}}, {nama}, {var1}, {var2}, {var3} otomatis dari Supabase contacts`}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600 dark:text-blue-400">•</span>

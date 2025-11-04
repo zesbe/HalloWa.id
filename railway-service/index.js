@@ -752,60 +752,64 @@ async function processBroadcasts() {
             // Extract phone number from contact object or use as string
             const phoneNumber = typeof contact === 'object' ? contact.phone_number : contact;
             
+            // ALWAYS get contact info from Supabase database for personalization
+            const { data: contactData } = await supabase
+              .from('contacts')
+              .select('name, var1, var2, var3')
+              .eq('phone_number', phoneNumber)
+              .eq('user_id', broadcast.user_id)
+              .maybeSingle();
+            
+            const contactInfo = contactData || { 
+              name: (typeof contact === 'object' ? contact.name : null) || phoneNumber 
+            };
+            
             // Process message variables for personalization
             let processedMessage = broadcast.message;
             
-            if (typeof contact === 'object' && contact.name) {
-              // Get contact info from database if available
-              const { data: contactData } = await supabase
-                .from('contacts')
-                .select('name, var1, var2, var3')
-                .eq('phone_number', phoneNumber)
-                .maybeSingle();
-              
-              const contactInfo = contactData || { name: contact.name || phoneNumber };
-              
-              // Process random text selection FIRST (option1|option2|option3)
-              const randomPattern = /\(([^)]+)\)/g;
-              processedMessage = processedMessage.replace(randomPattern, (match, options) => {
-                const choices = options.split('|').map(s => s.trim());
-                return choices[Math.floor(Math.random() * choices.length)];
-              });
-              
-              // Replace [[NAME]] with WhatsApp contact name
-              processedMessage = processedMessage.replace(/\[\[NAME\]\]/g, contactInfo.name || phoneNumber);
-              
-              // Replace {nama} and {{nama}} with contact name
-              processedMessage = processedMessage.replace(/\{\{?nama\}\}?/g, contactInfo.name || phoneNumber);
-              
-              // Replace {nomor} with phone number
-              processedMessage = processedMessage.replace(/\{nomor\}/g, phoneNumber);
-              
-              // Replace custom variables {var1}, {var2}, {var3}
-              if (contactData?.var1) {
-                processedMessage = processedMessage.replace(/\{var1\}/g, contactData.var1);
-              }
-              if (contactData?.var2) {
-                processedMessage = processedMessage.replace(/\{var2\}/g, contactData.var2);
-              }
-              if (contactData?.var3) {
-                processedMessage = processedMessage.replace(/\{var3\}/g, contactData.var3);
-              }
-              
-              // Replace time/date variables
-              const now = new Date();
-              const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-              
-              processedMessage = processedMessage.replace(/\{\{?waktu\}\}?/g, 
-                now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-              );
-              
-              processedMessage = processedMessage.replace(/\{\{?tanggal\}\}?/g, 
-                now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
-              );
-              
-              processedMessage = processedMessage.replace(/\{\{?hari\}\}?/g, days[now.getDay()]);
+            // Process random text selection FIRST (option1|option2|option3)
+            const randomPattern = /\(([^)]+)\)/g;
+            processedMessage = processedMessage.replace(randomPattern, (match, options) => {
+              const choices = options.split('|').map(s => s.trim());
+              return choices[Math.floor(Math.random() * choices.length)];
+            });
+            
+            // Replace [[NAME]] with WhatsApp contact name
+            processedMessage = processedMessage.replace(/\[\[NAME\]\]/g, contactInfo.name || phoneNumber);
+            
+            // Replace {{NAME}} with contact name (uppercase version)
+            processedMessage = processedMessage.replace(/\{\{NAME\}\}/g, contactInfo.name || phoneNumber);
+            
+            // Replace {nama} and {{nama}} with contact name (case insensitive)
+            processedMessage = processedMessage.replace(/\{\{?nama\}\}?/gi, contactInfo.name || phoneNumber);
+            
+            // Replace {nomor} with phone number
+            processedMessage = processedMessage.replace(/\{nomor\}/g, phoneNumber);
+            
+            // Replace custom variables {var1}, {var2}, {var3}
+            if (contactData?.var1) {
+              processedMessage = processedMessage.replace(/\{var1\}/g, contactData.var1);
             }
+            if (contactData?.var2) {
+              processedMessage = processedMessage.replace(/\{var2\}/g, contactData.var2);
+            }
+            if (contactData?.var3) {
+              processedMessage = processedMessage.replace(/\{var3\}/g, contactData.var3);
+            }
+            
+            // Replace time/date variables
+            const now = new Date();
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            
+            processedMessage = processedMessage.replace(/\{\{?waktu\}\}?/g,
+              now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+            );
+            
+            processedMessage = processedMessage.replace(/\{\{?tanggal\}\}?/g, 
+              now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            );
+            
+            processedMessage = processedMessage.replace(/\{\{?hari\}\}?/g, days[now.getDay()]);
             
             if (!phoneNumber) {
               console.error('❌ Invalid contact:', contact);
