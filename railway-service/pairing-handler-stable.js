@@ -151,13 +151,9 @@ class StablePairingHandler {
         session.code = formattedCode;
       }
       
-      // Store in Redis dengan TTL lebih pendek
-      try {
-        await redis.setPairingCode(deviceId, formattedCode, 300); // 5 min TTL
-        console.log(`📦 [${deviceName}] Code stored in Redis`);
-      } catch (err) {
-        console.error(`❌ [${deviceName}] Redis error:`, err);
-      }
+      // Code will be stored in Supabase database directly
+      console.log(`📦 [${deviceName}] Code will be stored in Supabase`);
+
       
       // Update database
       await supabase

@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 /**
- * Get QR code or pairing code from Redis for a device
+ * Get QR code or pairing code from Supabase for a device
  * This edge function provides a secure way to fetch temporary codes
  */
 Deno.serve(async (req) => {
@@ -15,17 +15,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const REDIS_URL = Deno.env.get('UPSTASH_REDIS_REST_URL');
-    const REDIS_TOKEN = Deno.env.get('UPSTASH_REDIS_REST_TOKEN');
-
-    if (!REDIS_URL || !REDIS_TOKEN) {
-      console.error('Redis credentials not configured');
-      return new Response(
-        JSON.stringify({ error: 'Redis not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Get deviceId from POST body (preferred) or URL query param fallback
     let deviceId: string | null = null;
     try {
@@ -72,10 +61,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify device belongs to user
+    // Fetch device with QR and pairing codes from Supabase
     const { data: device, error: deviceError } = await supabase
       .from('devices')
-      .select('id, user_id')
+      .select('id, user_id, qr_code, pairing_code')
       .eq('id', deviceId)
       .eq('user_id', user.id)
       .maybeSingle();
@@ -88,34 +77,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch from Redis using MGET to get both QR and pairing code
-    const redisResponse = await fetch(REDIS_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${REDIS_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(['MGET', `qr:${deviceId}`, `pairing:${deviceId}`]),
-    });
-
-    if (!redisResponse.ok) {
-      const errorText = await redisResponse.text();
-      console.error('Redis error:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'Redis fetch failed', details: errorText }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const redisData = await redisResponse.json();
-    const [qrCode, pairingCode] = redisData.result || [null, null];
-
-    console.log(`Fetched codes for device ${deviceId}: QR=${!!qrCode}, Pairing=${!!pairingCode}`);
+    console.log(`Fetched codes for device ${deviceId}: QR=${!!device.qr_code}, Pairing=${!!device.pairing_code}`);
 
     return new Response(
       JSON.stringify({
-        qrCode,
-        pairingCode,
+        qrCode: device.qr_code,
+        pairingCode: device.pairing_code,
         deviceId,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

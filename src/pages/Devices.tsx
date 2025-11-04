@@ -910,9 +910,6 @@ export const Devices = () => {
               
               {(connectionStatus === "pairing_ready" || connectionStatus === "pairing_expired") && (
                 <div className="space-y-3 sm:space-y-4 w-full">
-                  {/* Debug log */}
-                  {console.log('Displaying pairing code:', selectedDevice?.pairing_code)}
-                  
                   {/* Pairing Code Display Card */}
                   <div className="relative bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-4 sm:p-6 rounded-xl border-2 border-green-200 dark:border-green-800">
                     <div className={`${connectionStatus === "pairing_expired" ? "opacity-30" : ""}`}>
