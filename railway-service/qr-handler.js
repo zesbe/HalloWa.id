@@ -1,23 +1,15 @@
 const QRCode = require('qrcode');
-const redis = require('./redis-client');
 
 /**
  * Handle QR Code generation for WhatsApp connection
- * QR codes are stored in Redis with 5 minute TTL
- * @param {Object} sock - WhatsApp socket instance
+ * QR codes are stored in Supabase database
  * @param {Object} device - Device data from database
- * @param {Object} supabase - Supabase client
  * @param {string} qr - QR code string from Baileys
+ * @param {Object} supabase - Supabase client
  * @returns {Promise<boolean>} - Returns true if QR was handled successfully
  */
-async function handleQRCode(sock, device, supabase, qr) {
+async function handleQRCode(device, qr, supabase) {
   try {
-    // Only generate QR if not already registered
-    if (sock.authState.creds.registered) {
-      console.log('✅ Already registered, skipping QR generation');
-      return false;
-    }
-
     if (!qr) {
       return false;
     }
@@ -27,14 +19,12 @@ async function handleQRCode(sock, device, supabase, qr) {
     // Convert QR string to data URL
     const qrDataUrl = await QRCode.toDataURL(qr);
     
-    // Store QR in Redis with 10 minute TTL for better stability
-    await redis.setQRCode(device.id, qrDataUrl, 600);
-    
-    // Update status in database (but don't store QR there)
+    // Update database with QR code
     const { error } = await supabase
       .from('devices')
       .update({ 
-        status: 'connecting', 
+        status: 'connecting',
+        qr_code: qrDataUrl,
         pairing_code: null,
         updated_at: new Date().toISOString()
       })
@@ -45,7 +35,7 @@ async function handleQRCode(sock, device, supabase, qr) {
       return false;
     }
 
-    console.log('✅ QR stored in Redis (10 min TTL) - scan with WhatsApp app');
+    console.log('✅ QR stored in Supabase - scan with WhatsApp app');
     return true;
   } catch (error) {
     console.error('❌ Error generating QR code:', error);

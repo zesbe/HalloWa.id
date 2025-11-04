@@ -354,7 +354,7 @@ async function connectWhatsApp(device, isRecovery = false) {
     // QR Code handling
     if (qr && device.connection_method === 'qr') {
       console.log(`🔲 QR Code generated for: ${device.device_name}`);
-      await handleQRCode(device.id, qr, supabase);
+      await handleQRCode(device, qr, supabase);
     }
     
     // PAIRING CODE handling (IMPROVED)
