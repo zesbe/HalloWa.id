@@ -133,11 +133,12 @@ class StablePairingHandler {
       }
 
       // Update database - this is the primary storage
+      // Use 'connecting' status so frontend can detect pairing code
       await supabase
         .from('devices')
         .update({
           pairing_code: formattedCode,
-          status: 'waiting_pairing',
+          status: 'connecting',
           error_message: null,
           updated_at: new Date().toISOString()
         })
