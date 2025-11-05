@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { 
   MessageSquare, 
   Users, 
@@ -13,6 +14,12 @@ import {
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [isReady, setIsReady] = useState(false);
+
+  // Ensure page is ready before showing content
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
 
   const features = [
     {
@@ -55,6 +62,10 @@ const Landing = () => {
     "Webhook Integration",
     "24/7 Customer Support"
   ];
+
+  if (!isReady) {
+    return null; // Prevent flash before hydration
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-900 dark:to-gray-800">

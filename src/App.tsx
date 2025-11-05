@@ -30,6 +30,8 @@ import AdminPlans from "./pages/admin/AdminPlans";
 import AdminFinancial from "./pages/admin/AdminFinancial";
 import Pricing from "./pages/Pricing";
 import Payment from "./pages/Payment";
+import ResetPassword from "./pages/ResetPassword";
+import UpdatePassword from "./pages/UpdatePassword";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const App = () => (
             {/* Public Landing Page with SEO */}
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/update-password" element={<UpdatePassword />} />
             <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             
