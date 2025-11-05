@@ -120,7 +120,7 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
             <MessageSquare className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">WAPANELS</h1>
+            <h1 className="text-xl font-bold text-foreground">HalloWa</h1>
             <p className="text-xs text-muted-foreground">WhatsApp Manager</p>
           </div>
         </div>
@@ -176,7 +176,7 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
 
       {/* Footer */}
       <div className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-muted-foreground text-center">© 2025 WATSAP.ID</p>
+        <p className="text-xs text-muted-foreground text-center">© 2025 HalloWa.id</p>
       </div>
     </div>
   );
