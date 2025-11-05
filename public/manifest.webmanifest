@@ -1,5 +1,6 @@
 {
-  "name": "HalloWa - WhatsApp Bot Marketing Platform",
+  "id": "/hallowa-app-v2024",
+  "name": "HalloWa - WhatsApp Multi-Device Management Platform",
   "short_name": "HalloWa",
   "description": "Platform WhatsApp Bot Marketing profesional untuk kelola multiple devices, broadcast messages, chatbot automation dalam satu platform terpadu",
   "theme_color": "#10b981",
@@ -8,7 +9,6 @@
   "orientation": "portrait",
   "scope": "/",
   "start_url": "/",
-  "id": "/",
   "categories": ["business", "productivity", "social"],
   "lang": "id-ID",
   "dir": "ltr",
