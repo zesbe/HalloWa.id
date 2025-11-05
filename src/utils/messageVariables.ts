@@ -33,7 +33,8 @@ export const processMessageVariables = (
     return choices[Math.floor(Math.random() * choices.length)];
   });
 
-  // Replace [[NAME]] with WhatsApp contact name (or phone if name not available)
+  // Replace [[NAME]] with WhatsApp account name (fetched from WhatsApp profile via Baileys)
+  // Note: This is handled server-side in Railway service, here we just use contact name as preview
   processed = processed.replace(/\[\[NAME\]\]/g, contact.name || contact.phone_number);
 
   // Replace {{NAME}} with contact name (uppercase version)

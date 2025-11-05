@@ -764,6 +764,21 @@ async function processBroadcasts() {
               name: (typeof contact === 'object' ? contact.name : null) || phoneNumber 
             };
             
+            // Get WhatsApp profile name (actual name from WhatsApp account)
+            let whatsappName = phoneNumber; // Default fallback
+            try {
+              const jid = phoneNumber.includes('@') ? phoneNumber : `${phoneNumber}@s.whatsapp.net`;
+              const [result] = await sock.onWhatsApp(jid);
+              if (result && result.exists) {
+                // Try to get contact info from WhatsApp
+                const contactFromWA = await sock.getNumberId(jid);
+                // Get push name or notify name from WhatsApp
+                whatsappName = result.notify || result.name || phoneNumber;
+              }
+            } catch (waError) {
+              console.log(`⚠️ Could not fetch WhatsApp name for ${phoneNumber}, using fallback`);
+            }
+            
             // Process message variables for personalization
             let processedMessage = broadcast.message;
             
@@ -774,10 +789,10 @@ async function processBroadcasts() {
               return choices[Math.floor(Math.random() * choices.length)];
             });
             
-            // Replace [[NAME]] with WhatsApp contact name
-            processedMessage = processedMessage.replace(/\[\[NAME\]\]/g, contactInfo.name || phoneNumber);
+            // Replace [[NAME]] with WhatsApp profile name (from WhatsApp account)
+            processedMessage = processedMessage.replace(/\[\[NAME\]\]/g, whatsappName);
             
-            // Replace {{NAME}} with contact name (uppercase version)
+            // Replace {{NAME}} with contact name from database (uppercase version)
             processedMessage = processedMessage.replace(/\{\{NAME\}\}/g, contactInfo.name || phoneNumber);
             
             // Replace {nama} and {{nama}} with contact name (case insensitive)

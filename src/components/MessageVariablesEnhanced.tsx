@@ -45,7 +45,7 @@ export const MessageVariablesEnhanced = ({ onInsert, className }: MessageVariabl
     {
       code: "[[NAME]]",
       label: "Nama WhatsApp",
-      description: "Nama WhatsApp penerima",
+      description: "Nama dari profil WhatsApp penerima (real-time via Baileys)",
       example: "Halo [[NAME]]!",
       icon: User,
       color: "from-blue-500 to-indigo-600",
@@ -53,8 +53,8 @@ export const MessageVariablesEnhanced = ({ onInsert, className }: MessageVariabl
     },
     {
       code: "{{NAME}}",
-      label: "Nama Kontak (Alt)",
-      description: "Nama dari database Supabase",
+      label: "Nama Kontak Database",
+      description: "Nama dari database kontak Supabase",
       example: "Hai {{NAME}}, apa kabar?",
       icon: Database,
       color: "from-blue-600 to-indigo-700",
@@ -308,6 +308,10 @@ export const MessageVariablesEnhanced = ({ onInsert, className }: MessageVariabl
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600 dark:text-blue-400">•</span>
                   <span>Variable akan diganti otomatis saat broadcast</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 dark:text-blue-400">•</span>
+                  <span>{`[[NAME]] diambil dari profil WhatsApp asli penerima (via Baileys)`}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600 dark:text-blue-400">•</span>
