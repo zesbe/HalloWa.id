@@ -44,16 +44,18 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt'],
+      includeAssets: ['favicon.ico', 'robots.txt', 'icon-192.png', 'icon-512.png'],
       manifest: {
+        id: '/hallowa-app-v2024', // ✨ UNIQUE ID - Force browser treat as new PWA
         name: 'HalloWa - WhatsApp Multi-Device Management Platform',
         short_name: 'HalloWa',
-        description: 'Kelola multiple WhatsApp devices, broadcast messages, chatbot automation, dan lebih banyak lagi dalam satu platform profesional',
+        description: 'Platform WhatsApp Bot Marketing profesional untuk kelola multiple devices, broadcast messages, chatbot automation dalam satu platform terpadu',
         theme_color: '#10b981',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        scope: '/',
         categories: ['business', 'productivity', 'social'],
         lang: 'id-ID',
         icons: [
@@ -80,11 +82,37 @@ export default defineConfig(({ mode }) => ({
           {
             src: '/og-image.png',
             sizes: '1200x630',
-            type: 'image/png'
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'HalloWa Dashboard'
+          }
+        ],
+        shortcuts: [
+          {
+            name: 'Dashboard',
+            short_name: 'Dashboard',
+            description: 'Lihat statistik dan overview',
+            url: '/dashboard',
+            icons: [{ src: '/icon-192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Broadcast',
+            short_name: 'Broadcast',
+            description: 'Kirim pesan ke banyak kontak',
+            url: '/broadcast',
+            icons: [{ src: '/icon-192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Devices',
+            short_name: 'Devices',
+            description: 'Kelola WhatsApp devices',
+            url: '/devices',
+            icons: [{ src: '/icon-192.png', sizes: '192x192' }]
           }
         ]
       },
       workbox: {
+        cleanupOutdatedCaches: true, // ✨ Auto cleanup old caches
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
@@ -99,6 +127,9 @@ export default defineConfig(({ mode }) => ({
             }
           }
         ]
+      },
+      devOptions: {
+        enabled: false // Disable PWA in development
       }
     })
   ].filter(Boolean),
