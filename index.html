@@ -102,19 +102,65 @@
 
   <body>
     <div id="root">
-      <!-- Initial SEO content - will be replaced by React -->
-      <main style="padding: 2rem; text-align: center; font-family: system-ui, -apple-system, sans-serif;">
-        <h1 style="color: #10b981; font-size: 2rem; margin-bottom: 1rem;">HalloWa - WhatsApp Bot Marketing Platform</h1>
-        <p style="color: #6b7280; max-width: 600px; margin: 0 auto;">Platform WhatsApp Bot Marketing profesional untuk kelola multiple devices, broadcast messages, chatbot automation dalam satu platform terpadu</p>
-        <div style="margin-top: 2rem;">
-          <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #10b981; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <!-- Skeleton Loading - Mirip Layout Asli -->
+      <div style="min-height: 100vh; background: #f9fafb; font-family: system-ui, -apple-system, sans-serif;">
+        
+        <!-- Header Skeleton -->
+        <div style="height: 64px; background: white; border-bottom: 1px solid #e5e7eb; padding: 0 1.5rem; display: flex; align-items: center; gap: 1rem;">
+          <div style="width: 40px; height: 40px; background: #e5e7eb; border-radius: 8px; animation: pulse 2s ease-in-out infinite;"></div>
+          <div style="width: 120px; height: 24px; background: #e5e7eb; border-radius: 4px; animation: pulse 2s ease-in-out infinite;"></div>
+          <div style="flex: 1;"></div>
+          <div style="width: 100px; height: 36px; background: #e5e7eb; border-radius: 6px; animation: pulse 2s ease-in-out infinite;"></div>
         </div>
-      </main>
+        
+        <!-- Content Skeleton -->
+        <div style="padding: 2rem 1.5rem; max-width: 1200px; margin: 0 auto;">
+          <!-- Title Skeleton -->
+          <div style="width: 240px; height: 32px; background: #e5e7eb; border-radius: 6px; margin-bottom: 1.5rem; animation: pulse 2s ease-in-out infinite;"></div>
+          
+          <!-- Cards Grid Skeleton -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+            <!-- Card 1 -->
+            <div style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 70%; height: 20px; background: #e5e7eb; border-radius: 4px; margin-bottom: 1rem; animation: pulse 2s ease-in-out infinite;"></div>
+              <div style="width: 50%; height: 16px; background: #e5e7eb; border-radius: 4px; margin-bottom: 0.5rem; animation: pulse 2s ease-in-out infinite;"></div>
+              <div style="width: 60%; height: 16px; background: #e5e7eb; border-radius: 4px; animation: pulse 2s ease-in-out infinite;"></div>
+            </div>
+            
+            <!-- Card 2 -->
+            <div style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 65%; height: 20px; background: #e5e7eb; border-radius: 4px; margin-bottom: 1rem; animation: pulse 2s ease-in-out infinite;"></div>
+              <div style="width: 55%; height: 16px; background: #e5e7eb; border-radius: 4px; margin-bottom: 0.5rem; animation: pulse 2s ease-in-out infinite;"></div>
+              <div style="width: 50%; height: 16px; background: #e5e7eb; border-radius: 4px; animation: pulse 2s ease-in-out infinite;"></div>
+            </div>
+            
+            <!-- Card 3 -->
+            <div style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 60%; height: 20px; background: #e5e7eb; border-radius: 4px; margin-bottom: 1rem; animation: pulse 2s ease-in-out infinite;"></div>
+              <div style="width: 45%; height: 16px; background: #e5e7eb; border-radius: 4px; margin-bottom: 0.5rem; animation: pulse 2s ease-in-out infinite;"></div>
+              <div style="width: 55%; height: 16px; background: #e5e7eb; border-radius: 4px; animation: pulse 2s ease-in-out infinite;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <style>
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+        
+        /* Smooth transition saat React mount */
+        #root > div {
+          transition: opacity 0.3s ease-out;
+        }
+        
+        body {
+          margin: 0;
+          padding: 0;
         }
       </style>
+      
       <noscript>
         <div style="padding: 2rem; text-align: center; background: #fef2f2; color: #991b1b; border-radius: 8px; margin: 2rem;">
           <strong>JavaScript Required:</strong> Please enable JavaScript to use HalloWa platform.
