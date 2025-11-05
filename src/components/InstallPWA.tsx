@@ -46,7 +46,7 @@ export function InstallPWA() {
             <Download className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm mb-1">Install WAPANELS</h3>
+            <h3 className="font-semibold text-sm mb-1">Install HalloWa</h3>
             <p className="text-xs text-muted-foreground mb-3">
               Install aplikasi untuk pengalaman lebih baik dan akses offline
             </p>
