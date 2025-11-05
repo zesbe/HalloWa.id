@@ -285,10 +285,9 @@ async function connectWhatsApp(device, isRecovery = false) {
 
     activeSockets.set(device.id, sock);
 
-    // Track pairing code request status with timestamp
-    let pairingCodeRequested = null;
-    let pairingAttempted = false;
-    let pairingMode = false; // Track if we're in pairing mode
+    // Track pairing mode
+    let pairingMode = false;
+    let pairingCodeGenerated = false;
 
     // Check if device is configured for pairing
     const { data: deviceConfig } = await supabase
@@ -296,11 +295,12 @@ async function connectWhatsApp(device, isRecovery = false) {
       .select('connection_method, phone_for_pairing')
       .eq('id', device.id)
       .single();
-    
+
     pairingMode = deviceConfig?.connection_method === 'pairing' && !!deviceConfig?.phone_for_pairing;
-    
+
     if (pairingMode) {
       console.log('🔑 Pairing mode enabled for device:', device.device_name);
+      console.log('📞 Phone number for pairing:', deviceConfig.phone_for_pairing);
     }
 
     // Handle connection updates
@@ -311,52 +311,48 @@ async function connectWhatsApp(device, isRecovery = false) {
         connection,
         registered: sock.authState.creds.registered,
         isRecovery,
-        hasQR: !!qr
+        hasQR: !!qr,
+        pairingMode,
+        pairingCodeGenerated
       });
 
       // IMPORTANT: Only generate QR/pairing if NOT in recovery mode AND not registered
       if (!sock.authState.creds.registered && !isRecovery) {
         try {
-          // If in pairing mode, handle pairing ONLY
-          if (pairingMode && !pairingAttempted) {
-            // Wait for connection to be ready (connecting state or QR event)
-            const readyToRequest = connection === 'connecting' || !!qr;
-            
+          // If in pairing mode, handle pairing code
+          if (pairingMode && !pairingCodeGenerated) {
+            // Wait for socket to be in OPEN state (websocket connected)
+            // This happens when connection === 'open' (initial handshake) or when we get QR event
+            const socketReady = (connection === 'open') || (sock.ws && sock.ws.readyState === 1);
+
             console.log(`📱 Pairing mode check:`, {
-              readyToRequest,
               connection,
-              pairingAttempted,
-              hasQR: !!qr,
-              pairingMode
+              socketReady,
+              wsState: sock.ws?.readyState,
+              pairingCodeGenerated
             });
 
-            if (readyToRequest && !pairingAttempted) {
-              console.log('🔐 Attempting pairing code generation...');
-              
-              // Get fresh device data for phone number
-              const { data: deviceData } = await supabase
-                .from('devices')
-                .select('phone_for_pairing')
-                .eq('id', device.id)
-                .single();
-              
-              if (deviceData?.phone_for_pairing) {
-                const success = await stablePairingHandler.generatePairingCode(sock, device, supabase);
-                pairingAttempted = true; // Mark as attempted regardless of result
-                
-                if (success) {
-                  pairingCodeRequested = { timestamp: Date.now() };
-                  console.log('✅ Pairing code generated successfully');
-                  // Don't generate QR when pairing is successful
-                  return;
-                } else {
-                  console.log('⚠️ Pairing code generation failed');
-                  // Continue to allow potential QR fallback
-                }
+            // Trigger pairing code generation when socket is ready
+            if (socketReady) {
+              console.log('🔐 Socket ready - generating pairing code...');
+
+              // Generate pairing code (has built-in retry mechanism)
+              const success = await stablePairingHandler.generatePairingCode(sock, device, supabase);
+
+              if (success) {
+                pairingCodeGenerated = true;
+                console.log('✅ Pairing code generated successfully');
+                // Don't generate QR when pairing is successful
+                return;
+              } else {
+                console.log('⚠️ Pairing code generation failed - will retry on next connection update');
+                // Don't mark as generated, so it can retry
               }
+            } else {
+              console.log('⏳ Waiting for socket to be ready for pairing...');
             }
           }
-          
+
           // QR method - only if NOT in pairing mode
           if (qr && !pairingMode) {
             console.log('📷 QR mode - generating QR code...');
