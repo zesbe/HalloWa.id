@@ -46,8 +46,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'WAPANELS - WhatsApp Multi-Device Management Platform',
-        short_name: 'WAPANELS',
+        name: 'HalloWa - WhatsApp Multi-Device Management Platform',
+        short_name: 'HalloWa',
         description: 'Kelola multiple WhatsApp devices, broadcast messages, chatbot automation, dan lebih banyak lagi dalam satu platform profesional',
         theme_color: '#10b981',
         background_color: '#ffffff',
