@@ -19,7 +19,7 @@ interface DeviceCardProps {
   onConnect: (device: Device) => void;
   onDetail: (device: Device) => void;
   onClearSession: (device: Device) => void;
-  onRelog: (device: Device) => void;
+  onRelog: (device: Device) => void; // Keep name for compatibility
   onLogout: (device: Device) => void;
   onDelete: (id: string) => void;
   onCopyApiKey: (apiKey: string) => void;
@@ -33,7 +33,7 @@ export function DeviceCard({
   onConnect,
   onDetail,
   onClearSession,
-  onRelog,
+  onRelog: onReconnect, // Rename for clarity
   onLogout,
   onDelete,
   onCopyApiKey,
@@ -109,17 +109,17 @@ export function DeviceCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onRelog(device)}
-                  className="text-xs border-green-500 text-green-500"
+                  onClick={() => onReconnect(device)}
+                  className="text-xs border-blue-500 text-blue-500"
                 >
                   <RotateCcw className="w-3 h-3 mr-1" />
-                  Relog
+                  Reconnect
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => onLogout(device)}
-                  className="text-xs border-blue-500 text-blue-500"
+                  className="text-xs border-orange-500 text-orange-500"
                 >
                   <LogOut className="w-3 h-3 mr-1" />
                   Logout

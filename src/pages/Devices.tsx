@@ -398,40 +398,71 @@ export const Devices = () => {
     }
   };
   const handleClearSession = async (device: Device) => {
-    if (!confirm("Yakin ingin menghapus session data? Device akan disconnect.")) return;
+    if (!confirm("Hapus session dan autentikasi? Device perlu scan QR/pairing ulang.")) return;
 
     try {
+      // Clear all auth data - device will need fresh QR/pairing
       await supabase
         .from("devices")
         .update({ 
           session_data: null,
           qr_code: null,
           pairing_code: null,
-          status: "disconnected"
+          phone_number: null,
+          status: "disconnected",
+          connection_method: null,
+          phone_for_pairing: null
         })
         .eq("id", device.id);
 
-      toast.success("Session data berhasil dihapus");
+      toast.success("Session dihapus. Silakan scan QR/pairing ulang.");
       fetchDevices();
     } catch (error: any) {
       toast.error(error.message);
     }
   };
 
+  const handleReconnect = async (device: Device) => {
+    try {
+      // Just restart connection - keep session data for recovery
+      toast.info("Mencoba koneksi ulang...");
+      
+      await supabase
+        .from("devices")
+        .update({ 
+          status: "connecting"
+        })
+        .eq("id", device.id);
+
+      // Railway service will detect status change and attempt recovery
+      setTimeout(() => {
+        fetchDevices();
+        toast.success("Permintaan reconnect dikirim");
+      }, 1000);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   const handleLogout = async (device: Device) => {
-    if (!confirm("Yakin ingin logout dari device ini?")) return;
+    if (!confirm("Logout dari WhatsApp? Session akan dihapus dan device terputus.")) return;
 
     try {
+      // Full logout - clear everything including phone number
       await supabase
         .from("devices")
         .update({ 
           status: "disconnected",
+          session_data: null,
           phone_number: null,
-          qr_code: null
+          qr_code: null,
+          pairing_code: null,
+          connection_method: null,
+          phone_for_pairing: null
         })
         .eq("id", device.id);
 
-      toast.success("Device logged out successfully");
+      toast.success("Logout berhasil. Device terputus dari WhatsApp.");
       fetchDevices();
     } catch (error: any) {
       toast.error(error.message);
@@ -457,10 +488,6 @@ export const Devices = () => {
     toast.success("Copied to clipboard!");
   };
 
-  const handleRelog = (device: Device) => {
-    handleLogout(device);
-    setTimeout(() => handleConnectDevice(device), 1000);
-  };
 
   const handleDetail = (device: Device) => {
     setSelectedDevice(device);
@@ -616,7 +643,7 @@ export const Devices = () => {
                   onConnect={handleConnectDevice}
                   onDetail={handleDetail}
                   onClearSession={handleClearSession}
-                  onRelog={handleRelog}
+                  onRelog={handleReconnect}
                   onLogout={handleLogout}
                   onDelete={handleDeleteDevice}
                   onCopyApiKey={copyToClipboard}
@@ -734,25 +761,25 @@ export const Devices = () => {
                                   variant="outline"
                                   onClick={() => handleClearSession(device)}
                                   className="border-purple-500 text-purple-500 hover:bg-purple-50 h-8 w-8 p-0"
-                                  title="Clear Session"
+                                  title="Clear Session - Hapus data autentikasi"
                                 >
                                   <Database className="w-3 h-3" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleRelog(device)}
-                                  className="border-pink-500 text-pink-500 hover:bg-pink-50 h-8 w-8 p-0"
-                                  title="Relog"
+                                  onClick={() => handleReconnect(device)}
+                                  className="border-blue-500 text-blue-500 hover:bg-blue-50 h-8 w-8 p-0"
+                                  title="Reconnect - Coba koneksi ulang"
                                 >
-                                  <RotateCcw className="w-3 h-3" />
+                                  <RefreshCw className="w-3 h-3" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleLogout(device)}
-                                  className="border-blue-500 text-blue-500 hover:bg-blue-50 h-8 w-8 p-0"
-                                  title="Logout"
+                                  className="border-orange-500 text-orange-500 hover:bg-orange-50 h-8 w-8 p-0"
+                                  title="Logout - Keluar dari WhatsApp"
                                 >
                                   <LogOut className="w-3 h-3" />
                                 </Button>
@@ -1263,12 +1290,12 @@ export const Devices = () => {
                         <Button
                           onClick={() => {
                             setDetailDialogOpen(false);
-                            handleRelog(selectedDevice);
+                            handleReconnect(selectedDevice);
                           }}
                           variant="outline"
-                          className="border-pink-500 text-pink-500 hover:bg-pink-50"
+                          className="border-blue-500 text-blue-500 hover:bg-blue-50"
                         >
-                          <RotateCcw className="w-4 h-4 mr-2" />
+                          <RefreshCw className="w-4 h-4 mr-2" />
                           Reconnect
                         </Button>
                         <Button
@@ -1277,7 +1304,7 @@ export const Devices = () => {
                             handleLogout(selectedDevice);
                           }}
                           variant="outline"
-                          className="border-blue-500 text-blue-500 hover:bg-blue-50"
+                          className="border-orange-500 text-orange-500 hover:bg-orange-50"
                         >
                           <LogOut className="w-4 h-4 mr-2" />
                           Logout
