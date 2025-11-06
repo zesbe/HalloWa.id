@@ -711,7 +711,38 @@ async function processBroadcasts() {
         }
 
         console.log(`📤 Sending broadcast: ${broadcast.name}`);
-        
+
+        // Ensure target_contacts is an array
+        let targetContacts = broadcast.target_contacts;
+        if (!Array.isArray(targetContacts)) {
+          console.error('❌ target_contacts is not an array:', typeof targetContacts);
+          if (typeof targetContacts === 'string') {
+            try {
+              targetContacts = JSON.parse(targetContacts);
+              console.log('✅ Parsed target_contacts from string');
+            } catch (e) {
+              console.error('❌ Failed to parse target_contacts:', e);
+              targetContacts = [];
+            }
+          } else {
+            targetContacts = [];
+          }
+        }
+
+        console.log(`📊 Total target contacts: ${targetContacts.length}`);
+
+        if (targetContacts.length === 0) {
+          console.error('❌ No target contacts found for broadcast');
+          await supabase
+            .from('broadcasts')
+            .update({
+              status: 'failed',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', broadcast.id);
+          continue;
+        }
+
         let sentCount = 0;
         let failedCount = 0;
 
@@ -749,12 +780,13 @@ async function processBroadcasts() {
           return Math.floor(Math.random() * (maxDelay - minDelay) + minDelay);
         };
 
-        const adaptiveDelayMs = getAdaptiveDelay(broadcast.target_contacts.length);
+        const adaptiveDelayMs = getAdaptiveDelay(targetContacts.length);
         console.log(`📊 Delay settings: type=${delayType}, base=${baseDelay}s, adaptive=${adaptiveDelayMs}ms, randomize=${randomizeDelay}`);
 
         // Send to each target contact with intelligent batching
-        for (let i = 0; i < broadcast.target_contacts.length; i++) {
-          const contact = broadcast.target_contacts[i];
+        for (let i = 0; i < targetContacts.length; i++) {
+          const contact = targetContacts[i];
+          console.log(`📤 Processing contact ${i + 1}/${targetContacts.length}: ${typeof contact === 'object' ? contact.phone_number : contact}`);
           
           try {
             // Extract phone number from contact object or use as string
@@ -947,10 +979,10 @@ async function processBroadcasts() {
             await sock.sendMessage(jid, messageContent);
             
             sentCount++;
-            console.log(`✅ Sent to ${phoneNumber} (${i + 1}/${broadcast.target_contacts.length})`);
-            
+            console.log(`✅ Sent to ${phoneNumber} (${i + 1}/${targetContacts.length})`);
+
             // Batch pause logic
-            if ((i + 1) % batchSize === 0 && i < broadcast.target_contacts.length - 1) {
+            if ((i + 1) % batchSize === 0 && i < targetContacts.length - 1) {
               console.log(`⏸️ Batch complete (${i + 1} messages). Pausing for ${pauseBetweenBatches / 1000}s...`);
               
               // Update progress during pause
@@ -964,7 +996,7 @@ async function processBroadcasts() {
                 .eq('id', broadcast.id);
               
               await new Promise(resolve => setTimeout(resolve, pauseBetweenBatches));
-            } else if (i < broadcast.target_contacts.length - 1) {
+            } else if (i < targetContacts.length - 1) {
               // Regular delay between messages
               const delayMs = calculateDelay(adaptiveDelayMs);
               console.log(`⏱️ Waiting ${delayMs}ms before next message...`);

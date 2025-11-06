@@ -228,9 +228,13 @@ export default function Scheduled() {
   };
 
   const filteredContactList = contacts.filter(
-    (c) =>
-      c.name?.toLowerCase().includes(contactSearch.toLowerCase()) ||
-      c.phone_number.includes(contactSearch)
+    (c) => {
+      // Ensure contact data is valid string before filtering
+      const name = String(c.name || '').toLowerCase();
+      const phone = String(c.phone_number || '');
+      const search = contactSearch.toLowerCase();
+      return name.includes(search) || phone.includes(search);
+    }
   );
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -751,7 +755,7 @@ export default function Scheduled() {
                             <div className="flex flex-wrap gap-2">
                               {manualNumbers.map((num) => (
                                 <Badge key={num} variant="secondary" className="gap-1 text-sm py-1.5 px-2.5">
-                                  {num}
+                                  {String(num)}
                                   <X
                                     className="w-3.5 h-3.5 cursor-pointer hover:text-destructive"
                                     onClick={() => removeManualNumber(num)}
@@ -777,33 +781,40 @@ export default function Scheduled() {
                                 <p className="text-sm">Tidak ada kontak ditemukan</p>
                               </div>
                             ) : (
-                              filteredContactList.map((contact) => (
-                                <div
-                                  key={contact.id}
-                                  className="flex items-center gap-3 p-3 md:p-2 hover:bg-accent rounded-lg cursor-pointer active:scale-[0.98] transition-all"
-                                  onClick={() => toggleContact(contact.phone_number)}
-                                >
-                                  <Checkbox
-                                    checked={selectedContacts.includes(contact.phone_number)}
-                                    className="h-5 w-5 md:h-4 md:w-4"
-                                  />
-                                  <div className="flex items-center gap-3 md:gap-2 flex-1 min-w-0">
-                                    {contact.is_group ? (
-                                      <Users className="w-5 h-5 md:w-4 md:h-4 text-muted-foreground flex-shrink-0" />
-                                    ) : (
-                                      <div className="w-5 h-5 md:w-4 md:h-4 flex-shrink-0" />
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-base md:text-sm font-medium truncate">
-                                        {contact.name || contact.phone_number}
-                                      </p>
-                                      <p className="text-sm md:text-xs text-muted-foreground truncate">
-                                        {contact.phone_number}
-                                      </p>
+                              filteredContactList.map((contact) => {
+                                // Ensure all contact data is string to prevent React render errors
+                                const phoneNumber = String(contact.phone_number || '');
+                                const contactName = String(contact.name || phoneNumber || 'Unknown');
+                                const isGroup = Boolean(contact.is_group);
+
+                                return (
+                                  <div
+                                    key={contact.id}
+                                    className="flex items-center gap-3 p-3 md:p-2 hover:bg-accent rounded-lg cursor-pointer active:scale-[0.98] transition-all"
+                                    onClick={() => toggleContact(phoneNumber)}
+                                  >
+                                    <Checkbox
+                                      checked={selectedContacts.includes(phoneNumber)}
+                                      className="h-5 w-5 md:h-4 md:w-4"
+                                    />
+                                    <div className="flex items-center gap-3 md:gap-2 flex-1 min-w-0">
+                                      {isGroup ? (
+                                        <Users className="w-5 h-5 md:w-4 md:h-4 text-muted-foreground flex-shrink-0" />
+                                      ) : (
+                                        <div className="w-5 h-5 md:w-4 md:h-4 flex-shrink-0" />
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-base md:text-sm font-medium truncate">
+                                          {contactName}
+                                        </p>
+                                        <p className="text-sm md:text-xs text-muted-foreground truncate">
+                                          {phoneNumber}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))
+                                );
+                              })
                             )}
                           </div>
                         </ScrollArea>

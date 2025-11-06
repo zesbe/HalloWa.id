@@ -164,11 +164,18 @@ export function formatUTCToLocalInput(utcDateString: string, timezone: string = 
  * @returns Formatted string in local timezone
  */
 export function formatUTCToLocalDisplay(
-  utcDateString: string, 
+  utcDateString: string,
   timezone: string = getUserTimezone(),
   format: string = 'EEE, dd MMM yyyy HH:mm'
 ): string {
-  return formatInTimeZone(new Date(utcDateString), timezone, format, { locale: undefined });
+  try {
+    const result = formatInTimeZone(new Date(utcDateString), timezone, format);
+    // Ensure we always return a string, never an object
+    return String(result);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return new Date(utcDateString).toLocaleString();
+  }
 }
 
 /**
@@ -195,7 +202,13 @@ export function getCurrentLocalTime(timezone: string = getUserTimezone()): strin
  * @returns Display string with offset
  */
 export function getTimezoneDisplay(timezone: string = getUserTimezone()): string {
-  const now = new Date();
-  const formatted = formatInTimeZone(now, timezone, 'zzz');
-  return formatted;
+  try {
+    const now = new Date();
+    const formatted = formatInTimeZone(now, timezone, 'zzz');
+    // Ensure we always return a string
+    return String(formatted);
+  } catch (error) {
+    console.error('Error getting timezone display:', error);
+    return timezone;
+  }
 }
