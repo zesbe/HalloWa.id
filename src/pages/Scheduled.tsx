@@ -36,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, startTransition } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -95,7 +95,7 @@ export default function Scheduled() {
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start false for instant UI
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -125,7 +125,7 @@ export default function Scheduled() {
   useEffect(() => {
     fetchData();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates with optimistic smooth updates
     const channel = supabase
       .channel('scheduled-broadcasts-changes')
       .on(
@@ -135,8 +135,26 @@ export default function Scheduled() {
           schema: 'public',
           table: 'broadcasts'
         },
-        () => {
-          fetchData();
+        (payload) => {
+          console.log('🔄 Realtime broadcast update:', payload.eventType);
+
+          // Smooth optimistic updates without full refetch
+          startTransition(() => {
+            if (payload.eventType === 'INSERT') {
+              const newBroadcast = payload.new as Broadcast;
+              if (newBroadcast.scheduled_at) {
+                setBroadcasts(prev => [newBroadcast, ...prev].sort((a, b) =>
+                  new Date(a.scheduled_at!).getTime() - new Date(b.scheduled_at!).getTime()
+                ));
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              const updated = payload.new as Broadcast;
+              setBroadcasts(prev => prev.map(b => b.id === updated.id ? updated : b));
+            } else if (payload.eventType === 'DELETE') {
+              const deletedId = payload.old?.id;
+              setBroadcasts(prev => prev.filter(b => b.id !== deletedId));
+            }
+          });
         }
       )
       .subscribe();
@@ -166,13 +184,13 @@ export default function Scheduled() {
 
       if (broadcastError) throw broadcastError;
       
-      setBroadcasts((broadcastData || []) as Broadcast[]);
-      setDevices(deviceData || []);
-      setContacts(contactData || []);
+      startTransition(() => {
+        setBroadcasts((broadcastData || []) as Broadcast[]);
+        setDevices(deviceData || []);
+        setContacts(contactData || []);
+      });
     } catch (error: any) {
       toast.error("Gagal memuat data");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -498,9 +516,9 @@ export default function Scheduled() {
     };
 
     return (
-      <Card 
-        key={broadcast.id} 
-        className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden bg-card border-border"
+      <Card
+        key={broadcast.id}
+        className="hover:shadow-md transition-all duration-300 ease-in-out cursor-pointer overflow-hidden bg-card border-border"
         onClick={handleCardClick}
       >
         <CardHeader className="pb-3">

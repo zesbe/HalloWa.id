@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ interface Plan {
 export default function Pricing() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start false for instant UI
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,15 +39,16 @@ export default function Pricing() {
         .order("price", { ascending: true });
 
       if (error) throw error;
-      setPlans((data || []).map(plan => ({
-        ...plan,
-        features: Array.isArray(plan.features) ? plan.features as string[] : []
-      })));
+
+      startTransition(() => {
+        setPlans((data || []).map(plan => ({
+          ...plan,
+          features: Array.isArray(plan.features) ? plan.features as string[] : []
+        })));
+      });
     } catch (error) {
       console.error("Error fetching plans:", error);
       toast.error("Gagal memuat paket");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -113,7 +114,7 @@ export default function Pricing() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan) => (
-            <Card key={plan.id} className="p-6 space-y-6">
+            <Card key={plan.id} className="p-6 space-y-6 transition-all duration-300 ease-in-out hover:shadow-lg">
               <div>
                 <h3 className="text-2xl font-bold">{plan.name}</h3>
                 {plan.description && (

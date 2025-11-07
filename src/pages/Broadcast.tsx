@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { WhatsAppPreview } from "@/components/WhatsAppPreview";
@@ -58,7 +58,7 @@ export const Broadcast = () => {
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start false for instant UI
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [manualNumbers, setManualNumbers] = useState<string[]>([]);
@@ -108,24 +108,31 @@ export const Broadcast = () => {
           table: 'broadcasts'
         },
         (payload) => {
-          fetchData();
-          
+          // Smooth optimistic update instead of full refetch
+          startTransition(() => {
+            const updated = payload.new as Broadcast;
+            setBroadcasts(prev => prev.map(b => b.id === updated.id ? updated : b));
+          });
+
           const oldStatus = payload.old?.status;
           const newStatus = payload.new?.status;
           const broadcastName = payload.new?.name;
-          
+
           if (oldStatus !== newStatus && broadcastName) {
             if (newStatus === 'processing' && oldStatus === 'draft') {
               toast.info(`📤 ${broadcastName}`, {
-                description: 'Broadcast dimulai, pesan sedang dikirim...'
+                description: 'Broadcast dimulai, pesan sedang dikirim...',
+                duration: 3000
               });
             } else if (newStatus === 'completed') {
               toast.success(`✅ ${broadcastName} Selesai!`, {
-                description: `Terkirim: ${payload.new?.sent_count || 0}, Gagal: ${payload.new?.failed_count || 0}`
+                description: `Terkirim: ${payload.new?.sent_count || 0}, Gagal: ${payload.new?.failed_count || 0}`,
+                duration: 4000
               });
             } else if (newStatus === 'failed') {
               toast.error(`❌ ${broadcastName} Gagal`, {
-                description: 'Coba kirim ulang atau periksa koneksi device'
+                description: 'Coba kirim ulang atau periksa koneksi device',
+                duration: 4000
               });
             }
           }
@@ -156,13 +163,13 @@ export const Broadcast = () => {
         .select("*")
         .order("name");
 
-      setBroadcasts(broadcastData || []);
-      setDevices(deviceData || []);
-      setContacts(contactData || []);
+      startTransition(() => {
+        setBroadcasts(broadcastData || []);
+        setDevices(deviceData || []);
+        setContacts(contactData || []);
+      });
     } catch (error: any) {
       toast.error("Gagal memuat data");
-    } finally {
-      setLoading(false);
     }
   };
 
