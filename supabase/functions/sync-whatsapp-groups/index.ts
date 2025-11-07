@@ -79,23 +79,34 @@ serve(async (req) => {
 
     if (baileysServiceUrl) {
       try {
-        const response = await fetch(`${baileysServiceUrl}/groups/${device_id}`, {
+        const url = `${baileysServiceUrl}/api/groups/${device_id}`;
+        console.log(`🔗 Fetching groups from: ${url}`);
+
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${device.api_key}`,
             'Content-Type': 'application/json',
+            'X-Device-ID': device_id,
           },
+          timeout: 10000, // 10 second timeout
         });
+
+        console.log(`📡 Response status: ${response.status}`);
 
         if (response.ok) {
           const data = await response.json();
-          groups = data.groups || [];
+          groups = data.groups || data.data || [];
+          console.log(`✅ Fetched ${groups.length} groups from Baileys service`);
         } else {
-          console.error('Failed to fetch groups from Baileys service:', response.statusText);
+          const errorText = await response.text();
+          console.error('Failed to fetch groups from Baileys service:', response.status, errorText);
         }
       } catch (error) {
         console.error('Error fetching from Baileys service:', error);
       }
+    } else {
+      console.log('⚠️ BAILEYS_SERVICE_URL not configured, using sample groups');
     }
 
     // If no external service or it failed, create sample groups for testing
