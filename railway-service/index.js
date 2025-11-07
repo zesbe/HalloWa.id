@@ -56,7 +56,24 @@ async function startService() {
   // Start HTTP server for CRM message sending
   const httpServer = createHTTPServer(activeSockets);
   const port = process.env.PORT || 3000;
-  httpServer.listen(port, () => {
+
+  // Add error handling for port conflicts
+  httpServer.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${port} is already in use`);
+      console.log('🔄 Trying alternative port...');
+      // Try with port 0 (auto-assign)
+      httpServer.listen(0, '0.0.0.0', () => {
+        const address = httpServer.address();
+        console.log(`🌐 HTTP Server listening on port ${address.port}`);
+        console.log(`📡 Endpoints: /health, /send-message`);
+      });
+    } else {
+      console.error('❌ HTTP Server error:', err);
+    }
+  });
+
+  httpServer.listen(port, '0.0.0.0', () => {
     console.log(`🌐 HTTP Server listening on port ${port}`);
     console.log(`📡 Endpoints: /health, /send-message`);
   });
