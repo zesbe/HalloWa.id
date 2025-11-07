@@ -64,7 +64,7 @@ serve(async (req) => {
     }
 
     // Fetch real WhatsApp groups from Baileys service
-    const baileysServiceUrl = Deno.env.get('BAILEYS_SERVICE_URL');
+    let baileysServiceUrl = Deno.env.get('BAILEYS_SERVICE_URL');
 
     if (!baileysServiceUrl) {
       console.error('❌ BAILEYS_SERVICE_URL not configured');
@@ -79,6 +79,12 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
+    }
+
+    // Ensure URL has protocol (add https:// if missing)
+    if (!baileysServiceUrl.startsWith('http://') && !baileysServiceUrl.startsWith('https://')) {
+      baileysServiceUrl = `https://${baileysServiceUrl}`;
+      console.log(`ℹ️ Added https:// protocol to BAILEYS_SERVICE_URL: ${baileysServiceUrl}`);
     }
 
     let groups: GroupInfo[] = [];
