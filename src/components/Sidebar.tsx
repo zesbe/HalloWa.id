@@ -127,13 +127,13 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
       >
         <Icon
           className={cn(
-            "w-4 h-4 shrink-0 transition-colors",
+            "w-5 h-5 shrink-0 transition-colors",
             isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
           )}
         />
         <span
           className={cn(
-            "text-xs font-medium transition-all duration-200",
+            "text-sm font-medium transition-all duration-150 ease-out",
             isActive ? "text-primary" : "text-foreground",
             !isExpanded && "lg:opacity-0 lg:w-0 lg:overflow-hidden"
           )}
@@ -160,17 +160,17 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
       <div className="p-3 border-b border-sidebar-border flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <div className={cn(
-            "w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center shrink-0",
-            "transition-all duration-200"
+            "w-9 h-9 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center shrink-0",
+            "transition-all duration-150 ease-out"
           )}>
-            <MessageSquare className="w-4 h-4 text-white" />
+            <MessageSquare className="w-5 h-5 text-white" />
           </div>
           <div className={cn(
-            "transition-all duration-200",
+            "transition-all duration-150 ease-out",
             !isExpanded && "lg:opacity-0 lg:w-0 lg:overflow-hidden"
           )}>
-            <h1 className="text-sm font-bold text-foreground whitespace-nowrap">HalloWa</h1>
-            <p className="text-[10px] text-muted-foreground whitespace-nowrap">WhatsApp Manager</p>
+            <h1 className="text-base font-bold text-foreground whitespace-nowrap">HalloWa</h1>
+            <p className="text-xs text-muted-foreground whitespace-nowrap">WhatsApp Manager</p>
           </div>
         </div>
         <Button
@@ -179,7 +179,7 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
           className="lg:hidden h-8 w-8"
           onClick={handleClose}
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </Button>
       </div>
 
@@ -195,8 +195,8 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
         {/* Messaging Section */}
         <div className="space-y-0.5">
           <h3 className={cn(
-            "px-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1",
-            "transition-all duration-200",
+            "px-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1",
+            "transition-all duration-150 ease-out",
             !isExpanded && "lg:text-center lg:px-0"
           )}>
             {isExpanded ? 'Messaging' : 'MSG'}
@@ -209,8 +209,8 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
         {/* Features Section */}
         <div className="space-y-0.5">
           <h3 className={cn(
-            "px-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1",
-            "transition-all duration-200",
+            "px-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1",
+            "transition-all duration-150 ease-out",
             !isExpanded && "lg:text-center lg:px-0"
           )}>
             {isExpanded ? 'Features' : 'FTR'}
@@ -223,8 +223,8 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
         {/* Settings Section */}
         <div className="space-y-0.5">
           <h3 className={cn(
-            "px-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1",
-            "transition-all duration-200",
+            "px-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1",
+            "transition-all duration-150 ease-out",
             !isExpanded && "lg:text-center lg:px-0"
           )}>
             {isExpanded ? 'Settings' : 'SET'}
@@ -238,21 +238,21 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
       {/* Expand Indicator (Desktop Only) */}
       <div className={cn(
         "hidden lg:flex items-center justify-center p-2 border-t border-sidebar-border",
-        "transition-opacity duration-200",
+        "transition-opacity duration-150 ease-out",
         isExpanded && "opacity-0"
       )}>
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <ChevronRight className="w-3 h-3" />
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <ChevronRight className="w-4 h-4" />
         </div>
       </div>
 
       {/* Footer */}
       <div className={cn(
         "p-2 border-t border-sidebar-border",
-        "transition-all duration-200"
+        "transition-all duration-150 ease-out"
       )}>
         <p className={cn(
-          "text-[10px] text-muted-foreground text-center transition-all duration-200",
+          "text-xs text-muted-foreground text-center transition-all duration-150 ease-out",
           !isExpanded && "lg:opacity-0"
         )}>
           © 2025 HalloWa.id
@@ -275,12 +275,12 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
       <aside
         className={cn(
           "fixed lg:sticky top-0 left-0 h-screen z-[70]",
-          "transform transition-all duration-300 ease-in-out",
+          "transform transition-all duration-200 ease-out",
           // Mobile
           open ? "translate-x-0 w-64" : "-translate-x-full w-64",
           // Desktop
           "lg:translate-x-0",
-          isExpanded ? "lg:w-56" : "lg:w-16"
+          isExpanded ? "lg:w-64" : "lg:w-16"
         )}
       >
         {sidebarContent}
