@@ -117,9 +117,11 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps = {}) => {
     const isActive = location.pathname === pathWithoutQuery &&
       location.search === pathQuery;
 
-    // Only close sidebar on mobile (when overlay is open)
+    // Only close sidebar on mobile (screen width < 1024px)
+    // Desktop hover behavior should not be affected by clicks
     const handleClick = () => {
-      if (open) {
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
         handleClose();
       }
     };
