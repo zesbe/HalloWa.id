@@ -53,7 +53,9 @@ export type Database = {
       auto_post_schedules: {
         Row: {
           created_at: string
+          delay_minutes: number | null
           device_id: string
+          failed_count: number | null
           frequency: string
           id: string
           is_active: boolean | null
@@ -62,15 +64,21 @@ export type Database = {
           message: string
           name: string
           next_send_at: string | null
+          random_delay: boolean | null
           schedule_days: number[] | null
           schedule_time: string
+          selected_days: number[] | null
+          send_count: number | null
           target_groups: Json
+          timezone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          delay_minutes?: number | null
           device_id: string
+          failed_count?: number | null
           frequency?: string
           id?: string
           is_active?: boolean | null
@@ -79,15 +87,21 @@ export type Database = {
           message: string
           name: string
           next_send_at?: string | null
+          random_delay?: boolean | null
           schedule_days?: number[] | null
           schedule_time: string
+          selected_days?: number[] | null
+          send_count?: number | null
           target_groups?: Json
+          timezone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          delay_minutes?: number | null
           device_id?: string
+          failed_count?: number | null
           frequency?: string
           id?: string
           is_active?: boolean | null
@@ -96,11 +110,45 @@ export type Database = {
           message?: string
           name?: string
           next_send_at?: string | null
+          random_delay?: boolean | null
           schedule_days?: number[] | null
           schedule_time?: string
+          selected_days?: number[] | null
+          send_count?: number | null
           target_groups?: Json
+          timezone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      auto_replies: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          keyword: string
+          reply: string
+          session_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          keyword: string
+          reply: string
+          session_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          keyword?: string
+          reply?: string
+          session_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -350,6 +398,126 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount: number
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          metadata: Json | null
+          payment_date: string | null
+          payment_method: string | null
+          plan_name: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          metadata?: Json | null
+          payment_date?: string | null
+          payment_method?: string | null
+          plan_name: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          metadata?: Json | null
+          payment_date?: string | null
+          payment_method?: string | null
+          plan_name?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      marketplace_products: {
+        Row: {
+          category: string
+          content: Json
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          description: string | null
+          downloads: number | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          name: string
+          preview_images: string[] | null
+          price: number | null
+          rating: number | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          content: Json
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          downloads?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          name: string
+          preview_images?: string[] | null
+          price?: number | null
+          rating?: number | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: Json
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          downloads?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          name?: string
+          preview_images?: string[] | null
+          price?: number | null
+          rating?: number | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       message_history: {
         Row: {
           broadcast_id: string | null
@@ -401,6 +569,65 @@ export type Database = {
           },
         ]
       }
+      message_queue: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          error_message: string | null
+          id: string
+          media_url: string | null
+          message: string | null
+          message_type: string | null
+          processed_at: string | null
+          retry_count: number | null
+          scheduled_at: string | null
+          status: string | null
+          to_phone: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          error_message?: string | null
+          id?: string
+          media_url?: string | null
+          message?: string | null
+          message_type?: string | null
+          processed_at?: string | null
+          retry_count?: number | null
+          scheduled_at?: string | null
+          status?: string | null
+          to_phone: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          error_message?: string | null
+          id?: string
+          media_url?: string | null
+          message?: string | null
+          message_type?: string | null
+          processed_at?: string | null
+          retry_count?: number | null
+          scheduled_at?: string | null
+          status?: string | null
+          to_phone?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_queue_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_templates: {
         Row: {
           content: string
@@ -431,6 +658,48 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string | null
+          direction: string | null
+          from_number: string
+          id: string
+          is_read: boolean | null
+          message_id: string
+          session_id: string
+          timestamp: string
+          to_number: string
+          type: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          direction?: string | null
+          from_number: string
+          id?: string
+          is_read?: boolean | null
+          message_id: string
+          session_id: string
+          timestamp: string
+          to_number: string
+          type?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          direction?: string | null
+          from_number?: string
+          id?: string
+          is_read?: boolean | null
+          message_id?: string
+          session_id?: string
+          timestamp?: string
+          to_number?: string
+          type?: string | null
         }
         Relationships: []
       }
@@ -562,6 +831,144 @@ export type Database = {
         }
         Relationships: []
       }
+      sessions: {
+        Row: {
+          auto_reply_enabled: boolean | null
+          created_at: string | null
+          device_name: string | null
+          id: string
+          last_active: string | null
+          pairing_code: string | null
+          phone_number: string | null
+          qr_code: string | null
+          session_id: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          auto_reply_enabled?: boolean | null
+          created_at?: string | null
+          device_name?: string | null
+          id?: string
+          last_active?: string | null
+          pairing_code?: string | null
+          phone_number?: string | null
+          qr_code?: string | null
+          session_id: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          auto_reply_enabled?: boolean | null
+          created_at?: string | null
+          device_name?: string | null
+          id?: string
+          last_active?: string | null
+          pairing_code?: string | null
+          phone_number?: string | null
+          qr_code?: string | null
+          session_id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      tutorials: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          duration: string | null
+          id: string
+          is_published: boolean | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          video_url: string
+          view_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          is_published?: boolean | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          video_url: string
+          view_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          is_published?: boolean | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          video_url?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      user_purchases: {
+        Row: {
+          created_at: string | null
+          id: string
+          invoice_id: string | null
+          price_paid: number
+          product_id: string
+          purchase_date: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          price_paid: number
+          product_id: string
+          purchase_date?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          price_paid?: number
+          product_id?: string
+          purchase_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_purchases_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -624,6 +1031,36 @@ export type Database = {
           },
         ]
       }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          password: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          password: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          password?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       webhooks: {
         Row: {
           created_at: string
@@ -665,12 +1102,178 @@ export type Database = {
           },
         ]
       }
+      whatsapp_conversations: {
+        Row: {
+          contact_jid: string
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string | null
+          device_id: string
+          id: string
+          is_archived: boolean | null
+          is_muted: boolean | null
+          is_starred: boolean | null
+          label: string | null
+          last_message_id: string | null
+          last_message_preview: string | null
+          last_message_time: string | null
+          metadata: Json | null
+          notes: string | null
+          unread_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_jid: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          device_id: string
+          id?: string
+          is_archived?: boolean | null
+          is_muted?: boolean | null
+          is_starred?: boolean | null
+          label?: string | null
+          last_message_id?: string | null
+          last_message_preview?: string | null
+          last_message_time?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_jid?: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          is_archived?: boolean | null
+          is_muted?: boolean | null
+          is_starred?: boolean | null
+          label?: string | null
+          last_message_id?: string | null
+          last_message_preview?: string | null
+          last_message_time?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversations_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          caption: string | null
+          contact_jid: string
+          conversation_id: string
+          created_at: string | null
+          device_id: string
+          error_message: string | null
+          from_me: boolean
+          id: string
+          is_forwarded: boolean | null
+          media_mime_type: string | null
+          media_size: number | null
+          media_url: string | null
+          message_content: string | null
+          message_id: string | null
+          message_type: string
+          metadata: Json | null
+          quoted_message_id: string | null
+          status: string | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          contact_jid: string
+          conversation_id: string
+          created_at?: string | null
+          device_id: string
+          error_message?: string | null
+          from_me?: boolean
+          id?: string
+          is_forwarded?: boolean | null
+          media_mime_type?: string | null
+          media_size?: number | null
+          media_url?: string | null
+          message_content?: string | null
+          message_id?: string | null
+          message_type?: string
+          metadata?: Json | null
+          quoted_message_id?: string | null
+          status?: string | null
+          timestamp: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          contact_jid?: string
+          conversation_id?: string
+          created_at?: string | null
+          device_id?: string
+          error_message?: string | null
+          from_me?: boolean
+          id?: string
+          is_forwarded?: boolean | null
+          media_mime_type?: string | null
+          media_size?: number | null
+          media_url?: string | null
+          message_content?: string | null
+          message_id?: string | null
+          message_type?: string
+          metadata?: Json | null
+          quoted_message_id?: string | null
+          status?: string | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      calculate_next_send_time_v2: {
+        Args: {
+          p_frequency: string
+          p_last_sent_at?: string
+          p_schedule_time: string
+          p_selected_days?: number[]
+          p_timezone?: string
+        }
+        Returns: string
+      }
       generate_api_key: { Args: never; Returns: string }
+      generate_invoice_number: { Args: never; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -681,6 +1284,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_product_downloads: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
+      mark_conversation_as_read: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
       }
     }
     Enums: {
