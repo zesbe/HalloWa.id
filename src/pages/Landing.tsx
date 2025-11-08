@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   MessageSquare,
   Users,
@@ -60,30 +60,53 @@ const Landing = () => {
     fetchLandingContent();
   }, []);
 
-  // Scroll Progress Bar & Parallax Effect
+  // Scroll Progress Bar & Parallax Effect - Optimized with RAF to prevent INP issues
   useEffect(() => {
-    const handleScroll = () => {
-      // Calculate scroll progress (0 to 100)
+    let rafId: number | null = null;
+    let lastScrollTime = 0;
+    const throttleDelay = 16; // ~60fps
+
+    const updateScrollValues = () => {
+      const scrollTop = window.scrollY;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
-      const scrollTop = window.scrollY;
       const scrollPercent = (scrollTop / (documentHeight - windowHeight)) * 100;
+
       setScrollProgress(scrollPercent);
-
-      // Calculate parallax offset (smoother scrolling for background)
       setParallaxOffset(scrollTop * 0.5);
-
-      // Set navbar scrolled state for backdrop effect
       setIsScrolled(scrollTop > 20);
 
-      // Close mobile menu on scroll
       if (mobileMenuOpen) {
         setMobileMenuOpen(false);
+      }
+
+      rafId = null;
+    };
+
+    const handleScroll = () => {
+      const now = Date.now();
+
+      // Throttle scroll events
+      if (now - lastScrollTime < throttleDelay) {
+        return;
+      }
+
+      lastScrollTime = now;
+
+      // Use RAF to prevent blocking UI thread
+      if (rafId === null) {
+        rafId = requestAnimationFrame(updateScrollValues);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
   }, [mobileMenuOpen]);
 
 
@@ -96,9 +119,11 @@ const Landing = () => {
         .eq('section_key', 'about')
         .single();
 
-      if (aboutSection) {
-        setAboutData({ title: aboutSection.title, content: aboutSection.content });
-      }
+      // Set About data with fallback to default content
+      setAboutData({
+        title: aboutSection?.title || 'Tentang HalloWa',
+        content: aboutSection?.content || 'HalloWa adalah platform profesional untuk mengelola WhatsApp Marketing dengan mudah dan efisien. Kami menyediakan solusi terbaik untuk bisnis Anda.'
+      });
 
       // Fetch Features
       const { data: features } = await supabase
@@ -136,16 +161,25 @@ const Landing = () => {
       }
     } catch (error) {
       console.error('Error fetching landing content:', error);
+      // Set default About content on error
+      setAboutData({
+        title: 'Tentang HalloWa',
+        content: 'HalloWa adalah platform profesional untuk mengelola WhatsApp Marketing dengan mudah dan efisien. Kami menyediakan solusi terbaik untuk bisnis Anda.'
+      });
     }
   };
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setMobileMenuOpen(false); // Close mobile menu after navigation
-    }
-  };
+  // Memoize scrollToSection to prevent recreation on every render (fixes INP)
+  const scrollToSection = useCallback((sectionId: string) => {
+    // Use RAF to prevent blocking UI thread
+    requestAnimationFrame(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setMobileMenuOpen(false); // Close mobile menu after navigation
+      }
+    });
+  }, []);
 
   // Icon mapping function
   const getIcon = (iconName: string) => {
@@ -596,28 +630,26 @@ const Landing = () => {
       </section>
 
       {/* About Section */}
-      {aboutData.title && (
-        <section id="about" className="container mx-auto px-4 py-24">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12" data-aos="fade-up">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
-                <Globe className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-700 dark:text-green-400">Tentang Kami</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-                {aboutData.title}
-              </h2>
+      <section id="about" className="container mx-auto px-4 py-24">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12" data-aos="fade-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
+              <Globe className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-400">Tentang Kami</span>
             </div>
-            <div
-              className="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line"
-              data-aos="fade-up"
-              data-aos-delay="100"
-            >
-              {aboutData.content}
-            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              {aboutData.title}
+            </h2>
           </div>
-        </section>
-      )}
+          <div
+            className="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line"
+            data-aos="fade-up"
+            data-aos-delay="100"
+          >
+            {aboutData.content}
+          </div>
+        </div>
+      </section>
 
       {/* Dashboard Showcase */}
       <section className="container mx-auto px-4 py-24">
