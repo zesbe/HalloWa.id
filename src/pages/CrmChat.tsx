@@ -132,6 +132,78 @@ export const CrmChat = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Realtime subscription for conversations
+  useEffect(() => {
+    if (!selectedDevice) return;
+
+    const channel = supabase
+      .channel('crm-conversations-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'whatsapp_conversations',
+        filter: `device_id=eq.${selectedDevice}`
+      }, (payload) => {
+        console.log('📱 Conversation update:', payload);
+        // Refresh conversations list when any conversation changes
+        startTransition(() => {
+          fetchContacts();
+        });
+      })
+      .subscribe();
+
+    console.log('✅ Subscribed to conversations updates');
+
+    return () => {
+      console.log('🔌 Unsubscribed from conversations');
+      channel.unsubscribe();
+    };
+  }, [selectedDevice, fetchContacts]);
+
+  // Realtime subscription for messages in selected conversation
+  useEffect(() => {
+    if (!selectedContact) return;
+
+    const channel = supabase
+      .channel(`crm-messages-${selectedContact.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'whatsapp_messages',
+        filter: `conversation_id=eq.${selectedContact.id}`
+      }, (payload) => {
+        console.log('💬 New message received:', payload);
+        // Add new message to messages list
+        setMessages(prev => [...prev, payload.new as Message]);
+        scrollToBottom();
+
+        // Refresh conversations to update last message preview
+        startTransition(() => {
+          fetchContacts();
+        });
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'whatsapp_messages',
+        filter: `conversation_id=eq.${selectedContact.id}`
+      }, (payload) => {
+        console.log('📝 Message status updated:', payload);
+        // Update message status (delivered, read, etc)
+        setMessages(prev => prev.map(msg =>
+          msg.id === payload.new.id ? payload.new as Message : msg
+        ));
+      })
+      .subscribe();
+
+    console.log('✅ Subscribed to messages for conversation:', selectedContact.contact_name);
+
+    return () => {
+      console.log('🔌 Unsubscribed from messages');
+      channel.unsubscribe();
+    };
+  }, [selectedContact, fetchContacts]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -181,27 +253,6 @@ export const CrmChat = () => {
       if (error) throw error;
 
       setContacts(data || []);
-
-      // Setup realtime subscription for new messages
-      const channel = supabase
-        .channel('crm-conversations')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'whatsapp_conversations',
-          filter: `device_id=eq.${selectedDevice}`
-        }, (payload) => {
-          console.log('Conversation update:', payload);
-          // Use startTransition to avoid blocking UI
-          startTransition(() => {
-            fetchContacts();
-          });
-        })
-        .subscribe();
-
-      return () => {
-        channel.unsubscribe();
-      };
     } catch (error: any) {
       console.error('Error fetching conversations:', error);
       toast.error("Gagal memuat percakapan");
@@ -226,25 +277,6 @@ export const CrmChat = () => {
       await supabase.rpc('mark_conversation_as_read', {
         p_conversation_id: conversationId
       });
-
-      // Setup realtime subscription for new messages in this conversation
-      const channel = supabase
-        .channel(`messages-${conversationId}`)
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'whatsapp_messages',
-          filter: `conversation_id=eq.${conversationId}`
-        }, (payload) => {
-          console.log('New message:', payload);
-          setMessages(prev => [...prev, payload.new as Message]);
-          scrollToBottom();
-        })
-        .subscribe();
-
-      return () => {
-        channel.unsubscribe();
-      };
     } catch (error: any) {
       console.error('Error fetching messages:', error);
       toast.error("Gagal memuat pesan");
