@@ -488,54 +488,94 @@ const Landing = () => {
 
         {/* Mobile Menu Overlay */}
         <div
-          className={`lg:hidden fixed inset-0 top-[73px] bg-white dark:bg-gray-900 transition-all duration-300 ${
+          className={`lg:hidden fixed inset-0 top-[73px] z-50 transition-all duration-300 ${
             mobileMenuOpen
               ? 'opacity-100 pointer-events-auto'
               : 'opacity-0 pointer-events-none'
           }`}
         >
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex flex-col gap-4">
+          {/* Backdrop with blur */}
+          <div
+            className={`absolute inset-0 bg-gradient-to-b from-white/95 via-white/98 to-white dark:from-gray-900/95 dark:via-gray-900/98 dark:to-gray-900 backdrop-blur-xl transition-all duration-300 ${
+              mobileMenuOpen ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Menu Content */}
+          <div
+            className={`relative container mx-auto px-4 py-6 transform transition-all duration-300 ${
+              mobileMenuOpen ? 'translate-y-0' : '-translate-y-4'
+            }`}
+          >
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full blur-3xl -z-10" />
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-blue-500/10 to-teal-500/10 rounded-full blur-3xl -z-10" />
+
+            <div className="flex flex-col gap-3 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-gray-200 dark:border-gray-700">
+              {/* Navigation Links */}
               <button
                 onClick={() => scrollToSection('about')}
-                className="text-left py-3 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+                className="text-left py-4 px-5 rounded-xl bg-white dark:bg-gray-800 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-gray-700 dark:hover:to-gray-700 text-gray-900 dark:text-gray-100 font-semibold transition-all duration-200 shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-800 active:scale-98"
               >
-                Tentang
+                <div className="flex items-center justify-between">
+                  <span>Tentang</span>
+                  <ArrowRight className="w-4 h-4 text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
               </button>
               <button
                 onClick={() => scrollToSection('features')}
-                className="text-left py-3 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+                className="text-left py-4 px-5 rounded-xl bg-white dark:bg-gray-800 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-gray-700 dark:hover:to-gray-700 text-gray-900 dark:text-gray-100 font-semibold transition-all duration-200 shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-800 active:scale-98"
               >
-                Fitur
+                <div className="flex items-center justify-between">
+                  <span>Fitur</span>
+                  <ArrowRight className="w-4 h-4 text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
               </button>
               <button
                 onClick={() => scrollToSection('pricing')}
-                className="text-left py-3 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+                className="text-left py-4 px-5 rounded-xl bg-white dark:bg-gray-800 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-gray-700 dark:hover:to-gray-700 text-gray-900 dark:text-gray-100 font-semibold transition-all duration-200 shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-800 active:scale-98"
               >
-                Harga
+                <div className="flex items-center justify-between">
+                  <span>Harga</span>
+                  <ArrowRight className="w-4 h-4 text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
               </button>
               <button
                 onClick={() => scrollToSection('contact')}
-                className="text-left py-3 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+                className="text-left py-4 px-5 rounded-xl bg-white dark:bg-gray-800 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-gray-700 dark:hover:to-gray-700 text-gray-900 dark:text-gray-100 font-semibold transition-all duration-200 shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-800 active:scale-98"
               >
-                Kontak
+                <div className="flex items-center justify-between">
+                  <span>Kontak</span>
+                  <ArrowRight className="w-4 h-4 text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
               </button>
 
-              <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+              <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
 
+              {/* CTA Buttons */}
               <Button
                 variant="outline"
+                size="lg"
                 onClick={() => { navigate("/auth"); setMobileMenuOpen(false); }}
-                className="w-full justify-center font-medium"
+                className="w-full justify-center font-semibold border-2 hover:border-green-500 hover:text-green-600 transition-all"
               >
                 Login
               </Button>
               <Button
+                size="lg"
                 onClick={() => { navigate("/auth"); setMobileMenuOpen(false); }}
-                className="w-full justify-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg shadow-green-500/30 font-medium"
+                className="w-full justify-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg shadow-green-500/30 font-semibold"
               >
-                Get Started
+                Get Started <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
+            </div>
+
+            {/* Quick Info */}
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                🎉 Free trial 7 hari • Tanpa kartu kredit
+              </p>
             </div>
           </div>
         </div>
