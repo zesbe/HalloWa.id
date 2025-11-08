@@ -76,17 +76,18 @@ export default function QuickSend() {
     try {
       const { data, error } = await supabase
         .from("devices")
-        .select("id, name, phone_number, status")
+        .select("id, device_name, phone_number, status")
         .eq("user_id", user?.id)
         .eq("status", "connected")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setDevices(data || []);
+      const devices = (data || []).map(d => ({ ...d, name: d.device_name }));
+      setDevices(devices);
 
       // Auto-select first device if available
-      if (data && data.length > 0 && !selectedDevice) {
-        setSelectedDevice(data[0].id);
+      if (devices && devices.length > 0 && !selectedDevice) {
+        setSelectedDevice(devices[0].id);
       }
     } catch (error: any) {
       console.error("Error fetching devices:", error);

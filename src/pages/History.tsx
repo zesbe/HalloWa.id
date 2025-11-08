@@ -76,12 +76,13 @@ export default function History() {
     try {
       const { data, error } = await supabase
         .from("devices")
-        .select("id, name, phone_number")
+        .select("id, device_name, phone_number")
         .eq("user_id", user?.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setDevices(data || []);
+      const devices = (data || []).map(d => ({ ...d, name: d.device_name }));
+      setDevices(devices);
     } catch (error: any) {
       console.error("Error fetching devices:", error);
     }
@@ -94,7 +95,7 @@ export default function History() {
         .from("message_history")
         .select(`
           *,
-          devices!inner(name, phone_number)
+          devices!inner(device_name, phone_number)
         `)
         .eq("user_id", user?.id)
         .order("sent_at", { ascending: false })
@@ -120,7 +121,11 @@ export default function History() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setMessages(data || []);
+      const messages = (data || []).map((msg: any) => ({
+        ...msg,
+        devices: msg.devices ? { name: msg.devices.device_name, phone_number: msg.devices.phone_number } : undefined
+      }));
+      setMessages(messages);
     } catch (error: any) {
       console.error("Error fetching messages:", error);
       toast.error("Gagal memuat riwayat pesan");
