@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { 
-  MessageSquare, 
-  Users, 
-  Zap, 
-  Shield, 
-  BarChart3, 
+import {
+  MessageSquare,
+  Users,
+  Zap,
+  Shield,
+  BarChart3,
   Bot,
   CheckCircle2,
   ArrowRight,
@@ -18,7 +18,10 @@ import {
   Check,
   ChevronDown,
   TrendingUp,
-  Smartphone
+  Smartphone,
+  Mail,
+  Phone,
+  MapPin
 } from "lucide-react";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -28,10 +31,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
   const navigate = useNavigate();
   const [isReady, setIsReady] = useState(false);
+
+  // Dynamic content from database
+  const [aboutData, setAboutData] = useState({ title: '', content: '' });
+  const [featuresData, setFeaturesData] = useState<any[]>([]);
+  const [contactData, setContactData] = useState({ email: '', phone: '', address: '' });
 
   useEffect(() => {
     AOS.init({
@@ -42,7 +51,71 @@ const Landing = () => {
       delay: 0,
     });
     setIsReady(true);
+    fetchLandingContent();
   }, []);
+
+  const fetchLandingContent = async () => {
+    try {
+      // Fetch About section
+      const { data: aboutSection } = await supabase
+        .from('landing_sections')
+        .select('*')
+        .eq('section_key', 'about')
+        .single();
+
+      if (aboutSection) {
+        setAboutData({ title: aboutSection.title, content: aboutSection.content });
+      }
+
+      // Fetch Features
+      const { data: features } = await supabase
+        .from('landing_features')
+        .select('*')
+        .order('order_index');
+
+      if (features) {
+        setFeaturesData(features);
+      }
+
+      // Fetch Contact
+      const { data: contact } = await supabase
+        .from('landing_contact')
+        .select('*')
+        .single();
+
+      if (contact) {
+        setContactData({
+          email: contact.email || '',
+          phone: contact.phone || '',
+          address: contact.address || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching landing content:', error);
+    }
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Icon mapping function
+  const getIcon = (iconName: string) => {
+    const iconMap: Record<string, any> = {
+      MessageSquare: <MessageSquare className="w-6 h-6" />,
+      Users: <Users className="w-6 h-6" />,
+      Bot: <Bot className="w-6 h-6" />,
+      Zap: <Zap className="w-6 h-6" />,
+      Shield: <Shield className="w-6 h-6" />,
+      BarChart3: <BarChart3 className="w-6 h-6" />,
+      Star: <Star className="w-6 h-6" />,
+      CheckCircle2: <CheckCircle2 className="w-6 h-6" />,
+    };
+    return iconMap[iconName] || <Star className="w-6 h-6" />;
+  };
 
   const features = [
     {
@@ -166,6 +239,20 @@ const Landing = () => {
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">HalloWa</span>
           </div>
+          <div className="hidden md:flex gap-6 items-center">
+            <button onClick={() => scrollToSection('about')} className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+              Tentang
+            </button>
+            <button onClick={() => scrollToSection('features')} className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+              Fitur
+            </button>
+            <button onClick={() => navigate('/pricing')} className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+              Harga
+            </button>
+            <button onClick={() => scrollToSection('contact')} className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+              Kontak
+            </button>
+          </div>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={() => navigate("/auth")} className="hidden sm:flex">
               Login
@@ -257,6 +344,30 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* About Section */}
+      {aboutData.title && (
+        <section id="about" className="container mx-auto px-4 py-24">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12" data-aos="fade-up">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
+                <Globe className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-700 dark:text-green-400">Tentang Kami</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+                {aboutData.title}
+              </h2>
+            </div>
+            <div
+              className="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line"
+              data-aos="fade-up"
+              data-aos-delay="100"
+            >
+              {aboutData.content}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Dashboard Showcase */}
       <section className="container mx-auto px-4 py-24">
         <div className="text-center mb-16" data-aos="fade-up">
@@ -289,7 +400,7 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-24">
+      <section id="features" className="container mx-auto px-4 py-24">
         <div className="text-center mb-16" data-aos="fade-up">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
             <Sparkles className="w-4 h-4 text-green-600" />
@@ -304,15 +415,15 @@ const Landing = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div 
+          {(featuresData.length > 0 ? featuresData : features).map((feature, index) => (
+            <div
               key={index}
               className="group bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-green-500/50 hover:-translate-y-1"
               data-aos="fade-up"
               data-aos-delay={index * 100}
             >
               <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mb-5 text-white shadow-lg group-hover:scale-110 transition-transform">
-                {feature.icon}
+                {featuresData.length > 0 ? getIcon(feature.icon) : feature.icon}
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
                 {feature.title}
@@ -472,23 +583,87 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Contact Section */}
+      {contactData.email && (
+        <section id="contact" className="container mx-auto px-4 py-24">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16" data-aos="fade-up">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
+                <Mail className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-700 dark:text-green-400">Hubungi Kami</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                Kontak
+              </h2>
+              <p className="text-xl text-gray-600 dark:text-gray-300">
+                Kami siap membantu Anda. Hubungi kami melalui informasi berikut
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <div
+                className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 text-center hover:shadow-xl transition-shadow"
+                data-aos="fade-up"
+                data-aos-delay="0"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Email</h3>
+                <a href={`mailto:${contactData.email}`} className="text-green-600 dark:text-green-400 hover:underline">
+                  {contactData.email}
+                </a>
+              </div>
+
+              <div
+                className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 text-center hover:shadow-xl transition-shadow"
+                data-aos="fade-up"
+                data-aos-delay="100"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Telepon</h3>
+                <a href={`tel:${contactData.phone.replace(/\s/g, '')}`} className="text-green-600 dark:text-green-400 hover:underline">
+                  {contactData.phone}
+                </a>
+              </div>
+
+              <div
+                className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 text-center hover:shadow-xl transition-shadow"
+                data-aos="fade-up"
+                data-aos-delay="200"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Alamat</h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  {contactData.address}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-24 text-center">
         <div className="max-w-3xl mx-auto">
-          <h2 
+          <h2
             className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6"
             data-aos="zoom-in"
           >
             Siap Tingkatkan Marketing Anda?
           </h2>
-          <p 
+          <p
             className="text-xl text-gray-600 dark:text-gray-300 mb-10"
             data-aos="zoom-in"
             data-aos-delay="100"
           >
             Bergabung dengan ribuan bisnis yang sudah menggunakan HalloWa
           </p>
-          <Button 
+          <Button
             size="lg"
             onClick={() => navigate("/auth")}
             className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-lg px-10 py-6 shadow-xl shadow-green-500/30 group"
@@ -514,10 +689,18 @@ const Landing = () => {
               <span className="text-xl font-bold">HalloWa</span>
             </div>
             <div className="flex gap-6 text-gray-400">
-              <a href="#" className="hover:text-white transition-colors">Tentang</a>
-              <a href="#" className="hover:text-white transition-colors">Fitur</a>
-              <a href="#" className="hover:text-white transition-colors">Harga</a>
-              <a href="#" className="hover:text-white transition-colors">Kontak</a>
+              <button onClick={() => scrollToSection('about')} className="hover:text-white transition-colors">
+                Tentang
+              </button>
+              <button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">
+                Fitur
+              </button>
+              <button onClick={() => navigate('/pricing')} className="hover:text-white transition-colors">
+                Harga
+              </button>
+              <button onClick={() => scrollToSection('contact')} className="hover:text-white transition-colors">
+                Kontak
+              </button>
             </div>
             <p className="text-gray-400 text-sm">
               © 2024 HalloWa. All rights reserved.
