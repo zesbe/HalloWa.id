@@ -30,6 +30,12 @@ async function saveMessageToDatabase(deviceId, userId, messageData) {
       return null;
     }
 
+    // Skip status broadcast and other non-chat messages
+    if (contactJid === 'status@broadcast' || contactJid.includes('broadcast')) {
+      console.log('⏭️  Skipping status broadcast message');
+      return null;
+    }
+
     const contactPhone = contactJid.split('@')[0];
 
     // Get or create conversation
@@ -84,6 +90,24 @@ async function saveMessageToDatabase(deviceId, userId, messageData) {
       actualMessageType = 'location';
     }
 
+    // Validate and format timestamp
+    let messageTimestamp;
+    try {
+      if (key.timestamp && !isNaN(key.timestamp)) {
+        // Convert WhatsApp timestamp (seconds) to milliseconds
+        const timestampMs = typeof key.timestamp === 'string'
+          ? parseInt(key.timestamp) * 1000
+          : key.timestamp * 1000;
+        messageTimestamp = new Date(timestampMs).toISOString();
+      } else {
+        // Fallback to current time if timestamp is invalid
+        messageTimestamp = new Date().toISOString();
+      }
+    } catch (error) {
+      console.error('Error parsing timestamp:', error);
+      messageTimestamp = new Date().toISOString();
+    }
+
     // Save message to database
     const { data: savedMessage, error: messageError } = await supabase
       .from('whatsapp_messages')
@@ -101,7 +125,7 @@ async function saveMessageToDatabase(deviceId, userId, messageData) {
         media_size: mediaSize,
         caption: caption,
         status: fromMe ? 'sent' : 'delivered',
-        timestamp: new Date(key.timestamp * 1000).toISOString(),
+        timestamp: messageTimestamp,
         metadata: {
           pushName: pushName,
           participant: key.participant
