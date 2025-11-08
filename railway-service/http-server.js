@@ -41,13 +41,29 @@ function createHTTPServer(activeSockets) {
     if (pathname === '/send-message' && req.method === 'POST') {
       let body = '';
 
+      req.on('error', (err) => {
+        console.error('Request error:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request error', details: err.message }));
+      });
+
       req.on('data', chunk => {
         body += chunk.toString();
       });
 
       req.on('end', async () => {
         try {
-          const { deviceId, targetJid, messageType, message, mediaUrl, caption } = JSON.parse(body);
+          // Parse JSON body
+          let parsedBody;
+          try {
+            parsedBody = JSON.parse(body);
+          } catch (parseError) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid JSON in request body', details: parseError.message }));
+            return;
+          }
+
+          const { deviceId, targetJid, messageType, message, mediaUrl, caption } = parsedBody;
 
           if (!deviceId || !targetJid) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -102,6 +118,21 @@ function createHTTPServer(activeSockets) {
 
           // Send message via Baileys
           const sentMessage = await sock.sendMessage(targetJid, messageContent);
+
+          // Save sent message to database for CRM
+          const { saveMessageToDatabase } = require('./crm-message-handler');
+
+          // Get device info from socket
+          const deviceUserId = sock.deviceUserId || null;
+
+          if (deviceUserId) {
+            await saveMessageToDatabase(deviceId, deviceUserId, {
+              key: sentMessage.key,
+              message: sentMessage.message,
+              pushName: sock.user?.name || 'Me',
+              fromMe: true
+            });
+          }
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
