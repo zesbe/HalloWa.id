@@ -109,7 +109,7 @@ pm2 restart multi-wa-mate
 pm2 logs multi-wa-mate --lines 50
 
 # Atau jika tidak pakai PM2
-cd /home/ubuntu/multi-wa-mate/railway-service
+cd /home/ubuntu/multi-wa-mate/backend
 node index.js
 ```
 
@@ -161,7 +161,7 @@ Cek log VPS harus menunjukkan:
 Pastikan VPS sudah ada environment variables berikut:
 
 ```bash
-# File: /home/ubuntu/multi-wa-mate/railway-service/.env
+# File: /home/ubuntu/multi-wa-mate/backend/.env
 
 SUPABASE_URL=https://ierdfxgeectqoekugyvb.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
@@ -186,7 +186,7 @@ pm2 start index.js --name multi-wa-mate --env production
 npm install -g pm2
 
 # Start dengan PM2
-cd /home/ubuntu/multi-wa-mate/railway-service
+cd /home/ubuntu/multi-wa-mate/backend
 pm2 start index.js --name multi-wa-mate
 
 # Auto-start on reboot
@@ -251,7 +251,7 @@ sudo ufw allow 443/tcp
 
 3. **Hapus folder sessions di VPS:**
    ```bash
-   rm -rf /home/ubuntu/multi-wa-mate/railway-service/baileys_sessions/*
+   rm -rf /home/ubuntu/multi-wa-mate/backend/baileys_sessions/*
    ```
 
 4. **Restart VPS service:**
