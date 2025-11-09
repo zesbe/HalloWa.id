@@ -114,14 +114,21 @@ export default function QuickSend() {
   const fetchTemplates = async () => {
     try {
       const { data, error } = await supabase
-        .from("templates")
-        .select("id, name, message")
+        .from("message_templates")
+        .select("id, name, content")
         .eq("user_id", user?.id)
         .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      setTemplates(data || []);
+      
+      // Transform to Template interface
+      const transformedTemplates = (data || []).map(t => ({
+        id: t.id,
+        name: t.name,
+        message: t.content
+      }));
+      setTemplates(transformedTemplates);
     } catch (error: any) {
       console.error("Error fetching templates:", error);
     }
@@ -290,17 +297,16 @@ export default function QuickSend() {
           if (queueError) throw queueError;
 
           // Log to message_history
-          await supabase.from("message_history").insert({
+          const { error: historyError } = await supabase.from("message_history").insert({
             user_id: user?.id,
             device_id: selectedDevice,
-            recipient_phone: formattedPhone,
-            recipient_name: recipient.name || null,
+            contact_phone: formattedPhone,
             message_type: messageType,
-            message_content: message.trim(),
+            content: message.trim(),
             media_url: mediaUrl || null,
-            status: "pending",
-            campaign_name: "Quick Send"
           });
+
+          if (historyError) console.error("Error logging history:", historyError);
 
           successCount++;
 
@@ -312,18 +318,16 @@ export default function QuickSend() {
           failCount++;
 
           // Log failure
-          await supabase.from("message_history").insert({
+          const { error: failHistoryError } = await supabase.from("message_history").insert({
             user_id: user?.id,
             device_id: selectedDevice,
-            recipient_phone: recipient.phone,
-            recipient_name: recipient.name || null,
+            contact_phone: recipient.phone,
             message_type: messageType,
-            message_content: message.trim(),
+            content: message.trim(),
             media_url: mediaUrl || null,
-            status: "failed",
-            error_message: error.message,
-            campaign_name: "Quick Send"
           });
+
+          if (failHistoryError) console.error("Error logging failure:", failHistoryError);
         }
       }
 

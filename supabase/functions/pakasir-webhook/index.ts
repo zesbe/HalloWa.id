@@ -81,6 +81,21 @@ serve(async (req) => {
     if (status === 'completed' && payment.plan_id) {
       console.log('Activating subscription for user:', payment.user_id);
 
+      // Get plan details to know duration
+      const { data: planData, error: planError } = await supabaseClient
+        .from('plans')
+        .select('duration_months')
+        .eq('id', payment.plan_id)
+        .single();
+
+      if (planError || !planData) {
+        console.error('Error fetching plan:', planError);
+        throw new Error('Plan not found');
+      }
+
+      const durationMonths = planData.duration_months || 1;
+      const durationMs = durationMonths * 30 * 24 * 60 * 60 * 1000; // months to milliseconds
+
       // Check if user has active subscription
       const { data: existingSub } = await supabaseClient
         .from('user_subscriptions')
@@ -90,21 +105,29 @@ serve(async (req) => {
         .single();
 
       if (existingSub) {
-        // Update existing subscription
+        // Extend existing subscription from current expires_at or now
+        const currentExpiry = existingSub.expires_at ? new Date(existingSub.expires_at) : new Date();
+        const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+        const newExpiresAt = new Date(baseDate.getTime() + durationMs);
+
         const { error: updateSubError } = await supabaseClient
           .from('user_subscriptions')
           .update({
             plan_id: payment.plan_id,
-            starts_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+            expires_at: newExpiresAt.toISOString(),
+            status: 'active'
           })
           .eq('id', existingSub.id);
 
         if (updateSubError) {
           console.error('Error updating subscription:', updateSubError);
+        } else {
+          console.log(`Subscription extended to: ${newExpiresAt.toISOString()}`);
         }
       } else {
         // Create new subscription
+        const newExpiresAt = new Date(Date.now() + durationMs);
+        
         const { error: createSubError } = await supabaseClient
           .from('user_subscriptions')
           .insert({
@@ -112,11 +135,13 @@ serve(async (req) => {
             plan_id: payment.plan_id,
             status: 'active',
             starts_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+            expires_at: newExpiresAt.toISOString(),
           });
 
         if (createSubError) {
           console.error('Error creating subscription:', createSubError);
+        } else {
+          console.log(`New subscription created, expires: ${newExpiresAt.toISOString()}`);
         }
       }
 

@@ -279,7 +279,7 @@ export const CrmChat = () => {
 
       if (error) throw error;
 
-      setMessages(data || []);
+      setMessages((data || []) as any);
 
       // Mark conversation as read
       await supabase.rpc('mark_conversation_as_read', {

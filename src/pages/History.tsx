@@ -91,7 +91,7 @@ export default function History() {
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      let query = supabase
+      let query: any = supabase
         .from("message_history")
         .select(`
           *,
@@ -118,7 +118,7 @@ export default function History() {
         query = query.lte("sent_at", new Date(dateTo).toISOString());
       }
 
-      const { data, error } = await query;
+      const { data, error }: any = await query;
 
       if (error) throw error;
       const messages = (data || []).map((msg: any) => ({

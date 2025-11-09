@@ -115,7 +115,7 @@ export default function AutoPost() {
           const contact = (payload.new || payload.old) as Contact;
 
           // Only update if it's a group and belongs to selected device
-          if (contact.is_group && contact.device_id === selectedDevice) {
+          if (contact.is_group) {
             startTransition(() => {
               if (payload.eventType === 'INSERT') {
                 const newGroup = payload.new as Contact;
@@ -496,10 +496,11 @@ export default function AutoPost() {
     }
   };
 
+
   const handleViewLogs = async (scheduleId: string) => {
     setViewingLogs(scheduleId);
     try {
-      const { data, error } = await supabase
+      const { data, error }: any = await supabase
         .from("auto_post_logs")
         .select("*")
         .eq("schedule_id", scheduleId)

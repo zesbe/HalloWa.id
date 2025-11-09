@@ -21,15 +21,13 @@ export const AdminLandingContent = () => {
 
   const fetchData = async () => {
     try {
-      const [sectionsRes, featuresRes, contactRes] = await Promise.all([
-        supabase.from("landing_sections").select("*").order("display_order"),
-        supabase.from("landing_features").select("*").order("display_order"),
-        supabase.from("landing_contact").select("*").maybeSingle(),
-      ]);
+      const sectionsRes = await supabase.from("landing_sections").select("*").order("display_order");
+      const featuresRes = await supabase.from("landing_features").select("*").order("display_order");
+      const contactRes = await supabase.from("landing_contact").select("*").maybeSingle();
 
-      if (sectionsRes.data) setSections(sectionsRes.data);
-      if (featuresRes.data) setFeatures(featuresRes.data);
-      if (contactRes.data) setContact(contactRes.data);
+      if (sectionsRes.data) setSections(sectionsRes.data as any);
+      if (featuresRes.data) setFeatures(featuresRes.data as any);
+      if (contactRes.data) setContact(contactRes.data as any);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Gagal memuat data");
@@ -42,7 +40,7 @@ export const AdminLandingContent = () => {
     try {
       const { error } = await supabase
         .from("landing_sections")
-        .upsert(section);
+        .upsert(section as any);
 
       if (error) throw error;
       toast.success("Section berhasil disimpan");
@@ -60,7 +58,7 @@ export const AdminLandingContent = () => {
         description: "Feature description",
         is_active: true,
         display_order: features.length,
-      });
+      } as any);
 
       if (error) throw error;
       toast.success("Feature ditambahkan");
@@ -75,7 +73,7 @@ export const AdminLandingContent = () => {
     try {
       const { error } = await supabase
         .from("landing_features")
-        .upsert(feature);
+        .upsert(feature as any);
 
       if (error) throw error;
       toast.success("Feature berhasil disimpan");
@@ -93,7 +91,7 @@ export const AdminLandingContent = () => {
       const { error } = await supabase
         .from("landing_features")
         .delete()
-        .eq("id", id);
+        .eq("id", id) as any;
 
       if (error) throw error;
       toast.success("Feature dihapus");
@@ -110,7 +108,7 @@ export const AdminLandingContent = () => {
     try {
       const { error } = await supabase
         .from("landing_contact")
-        .upsert(contact);
+        .upsert(contact as any);
 
       if (error) throw error;
       toast.success("Kontak berhasil disimpan");

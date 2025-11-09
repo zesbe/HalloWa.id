@@ -455,6 +455,150 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_contact: {
+        Row: {
+          address: string | null
+          email: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          linkedin: string | null
+          phone: string | null
+          twitter: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          phone?: string | null
+          twitter?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          phone?: string | null
+          twitter?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      landing_content: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          is_active: boolean | null
+          section_type: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          section_type: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          section_type?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      landing_features: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      landing_sections: {
+        Row: {
+          content: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          section_key: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          section_key: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          section_key?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketplace_products: {
         Row: {
           category: string
@@ -766,6 +910,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          duration_months: number
           features: Json | null
           id: string
           is_active: boolean | null
@@ -779,6 +924,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          duration_months?: number
           features?: Json | null
           id?: string
           is_active?: boolean | null
@@ -792,6 +938,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          duration_months?: number
           features?: Json | null
           id?: string
           is_active?: boolean | null
