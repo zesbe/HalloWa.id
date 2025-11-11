@@ -28,6 +28,7 @@ import Marketplace from "./pages/Marketplace";
 import QuickSend from "./pages/QuickSend";
 import Invoices from "./pages/Invoices";
 import History from "./pages/History";
+import Analytics from "./pages/Analytics";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPlans from "./pages/admin/AdminPlans";
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/quick-send" element={<ProtectedRoute requiredRole="user"><QuickSend /></ProtectedRoute>} />
             <Route path="/invoices" element={<ProtectedRoute requiredRole="user"><Invoices /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute requiredRole="user"><History /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute requiredRole="user"><Analytics /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute requiredRole="user"><Settings /></ProtectedRoute>} />
             <Route path="/pricing" element={<ProtectedRoute requiredRole="user"><Pricing /></ProtectedRoute>} />
             <Route path="/payment" element={<ProtectedRoute requiredRole="user"><Payment /></ProtectedRoute>} />

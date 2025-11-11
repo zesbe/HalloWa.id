@@ -11,7 +11,8 @@ import {
   Send,
   TrendingUp,
   Plus,
-  Radio
+  Radio,
+  BarChart3
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -222,6 +223,14 @@ export const Dashboard = () => {
               >
                 <Users className="w-4 h-4 mr-3" />
                 Import Kontak
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => navigate("/analytics")}
+              >
+                <BarChart3 className="w-4 h-4 mr-3" />
+                Lihat Analytics
               </Button>
             </CardContent>
           </Card>
