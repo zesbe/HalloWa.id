@@ -72,7 +72,7 @@ export default function AdminReminders() {
       if (error) throw error;
       setReminders(data || []);
     } catch (error: any) {
-      toast.error("Failed to load reminders: " + error.message);
+      toast.error("Gagal memuat pengingat: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function AdminReminders() {
   const handleCreateReminder = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error("Tidak terautentikasi");
 
       const { error } = await supabase
         .from("reminder_configs")
@@ -127,7 +127,7 @@ export default function AdminReminders() {
 
       if (error) throw error;
 
-      toast.success("Reminder created successfully!");
+      toast.success("Pengingat berhasil dibuat!");
       setShowCreateDialog(false);
       fetchReminders();
       fetchStats();
@@ -145,7 +145,7 @@ export default function AdminReminders() {
         send_time: "10:00:00"
       });
     } catch (error: any) {
-      toast.error("Failed to create reminder: " + error.message);
+      toast.error("Gagal membuat pengingat: " + error.message);
     }
   };
 
@@ -158,16 +158,16 @@ export default function AdminReminders() {
 
       if (error) throw error;
 
-      toast.success(currentStatus ? "Reminder paused" : "Reminder activated");
+      toast.success(currentStatus ? "Pengingat dijeda" : "Pengingat diaktifkan");
       fetchReminders();
       fetchStats();
     } catch (error: any) {
-      toast.error("Failed to update reminder: " + error.message);
+      toast.error("Gagal memperbarui pengingat: " + error.message);
     }
   };
 
   const deleteReminder = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this reminder?")) return;
+    if (!confirm("Apakah Anda yakin ingin menghapus pengingat ini?")) return;
 
     try {
       const { error } = await supabase
@@ -177,29 +177,29 @@ export default function AdminReminders() {
 
       if (error) throw error;
 
-      toast.success("Reminder deleted successfully");
+      toast.success("Pengingat berhasil dihapus");
       fetchReminders();
       fetchStats();
     } catch (error: any) {
-      toast.error("Failed to delete reminder: " + error.message);
+      toast.error("Gagal menghapus pengingat: " + error.message);
     }
   };
 
   const sendManualReminder = async () => {
-    toast.info("Manual reminder feature - coming soon!");
+    toast.info("Fitur pengingat manual - segera hadir!");
   };
 
   const reminderTypeLabels: Record<string, string> = {
-    subscription_renewal: "Subscription Renewal",
-    payment_due: "Payment Due",
-    custom: "Custom Reminder"
+    subscription_renewal: "Perpanjangan Langganan",
+    payment_due: "Pembayaran Jatuh Tempo",
+    custom: "Pengingat Kustom"
   };
 
   const targetSegmentLabels: Record<string, string> = {
-    all: "All Users",
-    expiring_soon: "Expiring Soon (< 7 days)",
-    expired: "Expired Users",
-    custom: "Custom Segment"
+    all: "Semua Pengguna",
+    expiring_soon: "Akan Berakhir (< 7 hari)",
+    expired: "Pengguna Kedaluwarsa",
+    custom: "Segmen Kustom"
   };
 
   return (
@@ -210,52 +210,52 @@ export default function AdminReminders() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
               <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-              Reminder Management
+              Manajemen Pengingat
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1">
-              Automated WhatsApp reminders for subscription renewals and payments
+              Pengingat WhatsApp otomatis untuk perpanjangan langganan dan pembayaran
             </p>
           </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button className="gap-2 w-full sm:w-auto">
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Create Reminder</span>
-                <span className="sm:hidden">Create</span>
+                <span className="hidden sm:inline">Buat Pengingat</span>
+                <span className="sm:hidden">Buat</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create New Reminder</DialogTitle>
+                <DialogTitle>Buat Pengingat Baru</DialogTitle>
                 <DialogDescription>
-                  Configure automated reminders for your customers
+                  Konfigurasi pengingat otomatis untuk pelanggan Anda
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Reminder Name *</Label>
+                  <Label htmlFor="name">Nama Pengingat *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., Subscription Expiry Alert"
+                    placeholder="contoh: Peringatan Langganan Berakhir"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Deskripsi</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Brief description of this reminder"
+                    placeholder="Deskripsi singkat tentang pengingat ini"
                     rows={2}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reminder_type">Reminder Type</Label>
+                    <Label htmlFor="reminder_type">Jenis Pengingat</Label>
                     <Select
                       value={formData.reminder_type}
                       onValueChange={(value) => setFormData({ ...formData, reminder_type: value })}
@@ -264,15 +264,15 @@ export default function AdminReminders() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="subscription_renewal">Subscription Renewal</SelectItem>
-                        <SelectItem value="payment_due">Payment Due</SelectItem>
-                        <SelectItem value="custom">Custom Reminder</SelectItem>
+                        <SelectItem value="subscription_renewal">Perpanjangan Langganan</SelectItem>
+                        <SelectItem value="payment_due">Pembayaran Jatuh Tempo</SelectItem>
+                        <SelectItem value="custom">Pengingat Kustom</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="target_segment">Target Segment</Label>
+                    <Label htmlFor="target_segment">Target Segmen</Label>
                     <Select
                       value={formData.target_segment}
                       onValueChange={(value) => setFormData({ ...formData, target_segment: value })}
@@ -281,23 +281,23 @@ export default function AdminReminders() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="expiring_soon">Expiring Soon (&lt; 7 days)</SelectItem>
-                        <SelectItem value="expired">Expired Users</SelectItem>
-                        <SelectItem value="all">All Users</SelectItem>
-                        <SelectItem value="custom">Custom Segment</SelectItem>
+                        <SelectItem value="expiring_soon">Akan Berakhir (&lt; 7 hari)</SelectItem>
+                        <SelectItem value="expired">Pengguna Kedaluwarsa</SelectItem>
+                        <SelectItem value="all">Semua Pengguna</SelectItem>
+                        <SelectItem value="custom">Segmen Kustom</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="device">WhatsApp Device *</Label>
+                  <Label htmlFor="device">Perangkat WhatsApp *</Label>
                   <Select
                     value={formData.device_id}
                     onValueChange={(value) => setFormData({ ...formData, device_id: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select device" />
+                      <SelectValue placeholder="Pilih perangkat" />
                     </SelectTrigger>
                     <SelectContent>
                       {devices.map((device) => (
@@ -308,12 +308,12 @@ export default function AdminReminders() {
                     </SelectContent>
                   </Select>
                   {devices.length === 0 && (
-                    <p className="text-sm text-destructive">No connected devices found</p>
+                    <p className="text-sm text-destructive">Tidak ada perangkat terhubung</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="trigger_days">Trigger Days Before Expiry</Label>
+                  <Label htmlFor="trigger_days">Hari Pemicu Sebelum Berakhir</Label>
                   <Input
                     id="trigger_days"
                     value={formData.trigger_days_before.join(", ")}
@@ -321,15 +321,15 @@ export default function AdminReminders() {
                       const days = e.target.value.split(",").map(d => parseInt(d.trim())).filter(d => !isNaN(d));
                       setFormData({ ...formData, trigger_days_before: days });
                     }}
-                    placeholder="e.g., 7, 3, 1"
+                    placeholder="contoh: 7, 3, 1"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Enter days separated by commas (e.g., 7, 3, 1 for reminders 7, 3, and 1 days before expiry)
+                    Masukkan hari dipisahkan koma (contoh: 7, 3, 1 untuk pengingat 7, 3, dan 1 hari sebelum berakhir)
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="send_time">Send Time</Label>
+                  <Label htmlFor="send_time">Waktu Kirim</Label>
                   <Input
                     id="send_time"
                     type="time"
@@ -339,16 +339,16 @@ export default function AdminReminders() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message">Message Template *</Label>
+                  <Label htmlFor="message">Template Pesan *</Label>
                   <Textarea
                     id="message"
                     value={formData.message_template}
                     onChange={(e) => setFormData({ ...formData, message_template: e.target.value })}
-                    placeholder="Hi {{name}}, your subscription will expire in {{days}} days. Please renew to continue using our service."
+                    placeholder="Hai {{nama}}, langganan Anda akan berakhir dalam {{hari}} hari. Harap perpanjang untuk terus menggunakan layanan kami."
                     rows={4}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use variables: {'{{name}}'}, {'{{days}}'}, {'{{plan}}'}, {'{{expires_at}}'}
+                    Gunakan variabel: {'{{nama}}'}, {'{{hari}}'}, {'{{paket}}'}, {'{{berakhir_pada}}'}
                   </p>
                 </div>
 
@@ -359,7 +359,7 @@ export default function AdminReminders() {
                     onCheckedChange={(checked) => setFormData({ ...formData, auto_send: checked })}
                   />
                   <Label htmlFor="auto_send" className="cursor-pointer">
-                    Enable automatic sending
+                    Aktifkan pengiriman otomatis
                   </Label>
                 </div>
 
@@ -369,13 +369,13 @@ export default function AdminReminders() {
                     disabled={!formData.name || !formData.message_template || !formData.device_id}
                     className="flex-1"
                   >
-                    Create Reminder
+                    Buat Pengingat
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setShowCreateDialog(false)}
                   >
-                    Cancel
+                    Batal
                   </Button>
                 </div>
               </div>
@@ -388,7 +388,7 @@ export default function AdminReminders() {
           <Card className="p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Reminders</p>
+                <p className="text-sm text-muted-foreground">Total Pengingat</p>
                 <p className="text-3xl font-bold text-foreground mt-1">{stats.total}</p>
               </div>
               <Bell className="w-10 h-10 text-primary opacity-20" />
@@ -398,7 +398,7 @@ export default function AdminReminders() {
           <Card className="p-6 border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Active Reminders</p>
+                <p className="text-sm text-muted-foreground">Pengingat Aktif</p>
                 <p className="text-3xl font-bold text-foreground mt-1">{stats.active}</p>
               </div>
               <TrendingUp className="w-10 h-10 text-green-500 opacity-20" />
@@ -408,7 +408,7 @@ export default function AdminReminders() {
           <Card className="p-6 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Sent Today</p>
+                <p className="text-sm text-muted-foreground">Terkirim Hari Ini</p>
                 <p className="text-3xl font-bold text-foreground mt-1">{stats.sent_today}</p>
               </div>
               <MessageSquare className="w-10 h-10 text-blue-500 opacity-20" />
@@ -421,12 +421,12 @@ export default function AdminReminders() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="automatic" className="gap-2 text-xs sm:text-sm">
               <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Automatic Reminders</span>
-              <span className="sm:hidden">Automatic</span>
+              <span className="hidden sm:inline">Pengingat Otomatis</span>
+              <span className="sm:hidden">Otomatis</span>
             </TabsTrigger>
             <TabsTrigger value="manual" className="gap-2 text-xs sm:text-sm">
               <Send className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Manual Send</span>
+              <span className="hidden sm:inline">Kirim Manual</span>
               <span className="sm:hidden">Manual</span>
             </TabsTrigger>
           </TabsList>
@@ -435,16 +435,16 @@ export default function AdminReminders() {
           <TabsContent value="automatic" className="space-y-4">
             {loading ? (
               <Card className="p-8">
-                <div className="text-center text-muted-foreground">Loading reminders...</div>
+                <div className="text-center text-muted-foreground">Memuat pengingat...</div>
               </Card>
             ) : reminders.length === 0 ? (
               <Card className="p-8">
                 <div className="text-center">
                   <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground">No reminders configured yet</p>
+                  <p className="text-muted-foreground">Belum ada pengingat yang dikonfigurasi</p>
                   <Button onClick={() => setShowCreateDialog(true)} className="mt-4 gap-2">
                     <Plus className="w-4 h-4" />
-                    Create Your First Reminder
+                    Buat Pengingat Pertama Anda
                   </Button>
                 </div>
               </Card>
@@ -457,12 +457,12 @@ export default function AdminReminders() {
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-lg font-semibold text-foreground">{reminder.name}</h3>
                           <Badge variant={reminder.is_active ? "default" : "secondary"}>
-                            {reminder.is_active ? "Active" : "Paused"}
+                            {reminder.is_active ? "Aktif" : "Dijeda"}
                           </Badge>
                           {reminder.auto_send && (
                             <Badge variant="outline" className="gap-1">
                               <Clock className="w-3 h-3" />
-                              Auto
+                              Otomatis
                             </Badge>
                           )}
                         </div>
@@ -473,7 +473,7 @@ export default function AdminReminders() {
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <p className="text-muted-foreground">Type</p>
+                            <p className="text-muted-foreground">Jenis</p>
                             <p className="font-medium text-foreground">
                               {reminderTypeLabels[reminder.reminder_type]}
                             </p>
@@ -485,19 +485,19 @@ export default function AdminReminders() {
                             </p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Trigger Days</p>
+                            <p className="text-muted-foreground">Hari Pemicu</p>
                             <p className="font-medium text-foreground">
-                              {reminder.trigger_days_before.join(", ")} days
+                              {reminder.trigger_days_before.join(", ")} hari
                             </p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Total Sent</p>
+                            <p className="text-muted-foreground">Total Terkirim</p>
                             <p className="font-medium text-foreground">{reminder.total_sent}</p>
                           </div>
                         </div>
 
                         <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                          <p className="text-xs text-muted-foreground mb-1">Message Preview</p>
+                          <p className="text-xs text-muted-foreground mb-1">Preview Pesan</p>
                           <p className="text-sm text-foreground line-clamp-2">{reminder.message_template}</p>
                         </div>
                       </div>
@@ -507,7 +507,7 @@ export default function AdminReminders() {
                           size="icon"
                           variant="outline"
                           onClick={() => toggleReminderStatus(reminder.id, reminder.is_active)}
-                          title={reminder.is_active ? "Pause" : "Activate"}
+                          title={reminder.is_active ? "Jeda" : "Aktifkan"}
                         >
                           {reminder.is_active ? (
                             <Pause className="w-4 h-4" />
@@ -520,7 +520,7 @@ export default function AdminReminders() {
                           variant="outline"
                           className="text-destructive hover:text-destructive"
                           onClick={() => deleteReminder(reminder.id)}
-                          title="Delete"
+                          title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -537,13 +537,13 @@ export default function AdminReminders() {
             <Card className="p-8">
               <div className="text-center max-w-md mx-auto">
                 <Send className="w-16 h-16 text-primary mx-auto mb-4 opacity-50" />
-                <h3 className="text-xl font-semibold mb-2">Send Manual Reminders</h3>
+                <h3 className="text-xl font-semibold mb-2">Kirim Pengingat Manual</h3>
                 <p className="text-muted-foreground mb-6">
-                  Quickly send one-time reminder messages to selected users or segments
+                  Kirim pesan pengingat sekali waktu dengan cepat ke pengguna atau segmen yang dipilih
                 </p>
                 <Button onClick={sendManualReminder} className="gap-2">
                   <Send className="w-4 h-4" />
-                  Send Manual Reminder
+                  Kirim Pengingat Manual
                 </Button>
               </div>
             </Card>
