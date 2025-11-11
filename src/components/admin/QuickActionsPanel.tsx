@@ -29,46 +29,46 @@ export const QuickActionsPanel = () => {
   const quickActions = [
     {
       icon: UserPlus,
-      label: "Add User",
-      description: "Create new user account",
+      label: "Tambah Pengguna",
+      description: "Buat akun pengguna baru",
       action: () => navigate("/admin/users"),
       color: "from-blue-500 to-cyan-500"
     },
     {
       icon: Crown,
-      label: "Extend Subscription",
-      description: "Quick subscription extension",
+      label: "Perpanjang Langganan",
+      description: "Perpanjangan langganan cepat",
       action: () => setExtendDialog(true),
       color: "from-purple-500 to-pink-500"
     },
     {
       icon: Send,
       label: "Broadcast",
-      description: "Send announcement to all users",
+      description: "Kirim pengumuman ke semua pengguna",
       action: () => setBroadcastDialog(true),
       color: "from-green-500 to-emerald-500"
     },
     {
       icon: BarChart3,
-      label: "View Analytics",
-      description: "Check system metrics",
-      action: () => navigate("/admin/dashboard"),
+      label: "Lihat Analytics",
+      description: "Cek metrik sistem",
+      action: () => navigate("/admin/analytics"),
       color: "from-orange-500 to-red-500"
     },
     {
       icon: RefreshCcw,
-      label: "Sync Data",
-      description: "Refresh dashboard data",
+      label: "Sinkronisasi Data",
+      description: "Refresh data dashboard",
       action: () => {
         window.location.reload();
-        toast.success("Refreshing data...");
+        toast.success("Menyegarkan data...");
       },
       color: "from-teal-500 to-cyan-500"
     },
     {
       icon: Settings,
-      label: "Manage Plans",
-      description: "Edit subscription plans",
+      label: "Kelola Paket",
+      description: "Edit paket langganan",
       action: () => navigate("/admin/plans"),
       color: "from-indigo-500 to-purple-500"
     }
@@ -77,7 +77,7 @@ export const QuickActionsPanel = () => {
   const handleExtendSubscription = async () => {
     try {
       if (!userId) {
-        toast.error("User ID is required");
+        toast.error("ID Pengguna diperlukan");
         return;
       }
 
@@ -104,9 +104,9 @@ export const QuickActionsPanel = () => {
           .update({ expires_at: extendedDate.toISOString() })
           .eq("id", existingSub.id);
 
-        toast.success(`Subscription extended until ${extendedDate.toLocaleDateString("id-ID")}`);
+        toast.success(`Langganan diperpanjang hingga ${extendedDate.toLocaleDateString("id-ID")}`);
       } else {
-        toast.error("No active subscription found for this user");
+        toast.error("Tidak ada langganan aktif untuk pengguna ini");
       }
 
       setExtendDialog(false);
@@ -120,7 +120,7 @@ export const QuickActionsPanel = () => {
   const handleBroadcast = async () => {
     try {
       if (!broadcastMessage) {
-        toast.error("Message is required");
+        toast.error("Pesan diperlukan");
         return;
       }
 
@@ -128,11 +128,11 @@ export const QuickActionsPanel = () => {
       await supabase.from("system_alerts").insert({
         alert_type: "broadcast",
         severity: "info",
-        title: "Admin Broadcast",
+        title: "Broadcast Admin",
         message: broadcastMessage,
       });
 
-      toast.success("Broadcast sent successfully");
+      toast.success("Broadcast berhasil dikirim");
       setBroadcastDialog(false);
       setBroadcastMessage("");
     } catch (error: any) {
@@ -146,7 +146,7 @@ export const QuickActionsPanel = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
-            Quick Actions
+            Aksi Cepat
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -175,19 +175,19 @@ export const QuickActionsPanel = () => {
       <Dialog open={extendDialog} onOpenChange={setExtendDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Extend Subscription</DialogTitle>
+            <DialogTitle>Perpanjang Langganan</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>User ID</Label>
+              <Label>ID Pengguna</Label>
               <Input
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder="Enter user UUID"
+                placeholder="Masukkan UUID pengguna"
               />
             </div>
             <div>
-              <Label>Extend by (months)</Label>
+              <Label>Perpanjang selama (bulan)</Label>
               <Input
                 type="number"
                 min="1"
@@ -196,7 +196,7 @@ export const QuickActionsPanel = () => {
               />
             </div>
             <Button onClick={handleExtendSubscription} className="w-full">
-              Extend Subscription
+              Perpanjang Langganan
             </Button>
           </div>
         </DialogContent>
@@ -206,20 +206,20 @@ export const QuickActionsPanel = () => {
       <Dialog open={broadcastDialog} onOpenChange={setBroadcastDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send Broadcast</DialogTitle>
+            <DialogTitle>Kirim Broadcast</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Message</Label>
+              <Label>Pesan</Label>
               <Input
                 value={broadcastMessage}
                 onChange={(e) => setBroadcastMessage(e.target.value)}
-                placeholder="Enter announcement message"
+                placeholder="Masukkan pesan pengumuman"
               />
             </div>
             <Button onClick={handleBroadcast} className="w-full">
               <Send className="w-4 h-4 mr-2" />
-              Send Broadcast
+              Kirim Broadcast
             </Button>
           </div>
         </DialogContent>
