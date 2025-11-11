@@ -47,6 +47,7 @@ import AdminBroadcast from "./pages/admin/AdminBroadcast";
 import AdminDevices from "./pages/admin/AdminDevices";
 import AdminReminders from "./pages/admin/AdminReminders";
 import AdminTemplates from "./pages/admin/AdminTemplates";
+import { AdminServerManagement } from "./pages/admin/AdminServerManagement";
 import Tutorial from "./pages/Tutorial";
 import Pricing from "./pages/Pricing";
 import Payment from "./pages/Payment";
@@ -116,6 +117,7 @@ const App = () => (
             <Route path="/admin/devices" element={<ProtectedRoute requiredRole="admin"><AdminDevices /></ProtectedRoute>} />
             <Route path="/admin/templates" element={<ProtectedRoute requiredRole="admin"><AdminTemplates /></ProtectedRoute>} />
             <Route path="/admin/reminders" element={<ProtectedRoute requiredRole="admin"><AdminReminders /></ProtectedRoute>} />
+            <Route path="/admin/server-management" element={<ProtectedRoute requiredRole="admin"><AdminServerManagement /></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

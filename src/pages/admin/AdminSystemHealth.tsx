@@ -133,7 +133,7 @@ export const AdminSystemHealth = () => {
         lastChecked: new Date().toISOString()
       };
 
-      // Check Baileys Service
+      // Check Baileys Service - Now check all backend servers
       let baileysHealth: ServiceHealth & {
         serverName?: string;
         version?: string;
@@ -142,95 +142,93 @@ export const AdminSystemHealth = () => {
         status: "down",
         responseTime: 0,
         lastChecked: new Date().toISOString(),
-        serverName: "Unknown",
+        serverName: "Multi-Server",
         version: "Unknown",
         connectedSessions: 0,
-        message: "Tidak dapat terhubung ke Baileys service"
+        message: "Checking multiple servers..."
       };
 
       try {
-        // Get Baileys service URL from environment variable or use default Railway
-        const baileysUrl = import.meta.env.VITE_BAILEYS_SERVICE_URL || 'https://multi-wa-mate-production.up.railway.app';
-        
-        // Get connected devices info first
-        const { data: connectedDevices, count: connectedCount } = await supabase
-          .from("devices")
-          .select("server_id", { count: "exact" })
-          .eq("status", "connected");
-        
-        // Get server name from database if available
-        const serverName = connectedDevices?.[0]?.server_id || 
-                          (baileysUrl.includes('railway') ? 'Railway Production Server' : 'WhatsApp Gateway');
-        
-        const baileysStart = Date.now();
-        
-        // Try to fetch health endpoint with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        try {
-          const baileysResponse = await fetch(`${baileysUrl}/health`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-          const baileysLatency = Date.now() - baileysStart;
+        // Get all active backend servers
+        const { data: backendServers, error: serversError } = await supabase
+          .from("backend_servers")
+          .select("*")
+          .eq("is_active", true)
+          .order("priority", { ascending: false });
 
-          if (baileysResponse.ok) {
-            const baileysData = await baileysResponse.json();
+        if (serversError) throw serversError;
 
-            baileysHealth = {
-              status: baileysLatency < 500 ? "healthy" : baileysLatency < 1000 ? "degraded" : "down",
-              responseTime: baileysLatency,
-              lastChecked: new Date().toISOString(),
-              serverName: serverName,
-              version: baileysData.version || "v1.0",
-              connectedSessions: baileysData.activeConnections || connectedCount || 0,
-              message: `${baileysData.activeConnections || connectedCount || 0} sesi aktif`
-            };
-          } else {
-            // Endpoint returned error, but check if devices are still connected
-            if (connectedCount && connectedCount > 0) {
-              baileysHealth = {
-                status: "degraded",
-                responseTime: baileysLatency,
-                lastChecked: new Date().toISOString(),
-                serverName: serverName,
-                version: "Unknown",
-                connectedSessions: connectedCount,
-                message: `${connectedCount} sesi aktif (endpoint error: ${baileysResponse.status})`
-              };
-            } else {
-              baileysHealth.message = `HTTP ${baileysResponse.status}: ${baileysResponse.statusText}`;
+        let totalConnected = 0;
+        let healthyServers = 0;
+        let avgResponseTime = 0;
+
+        if (backendServers && backendServers.length > 0) {
+          // Check each server
+          for (const server of backendServers) {
+            totalConnected += server.current_load || 0;
+            if (server.is_healthy) {
+              healthyServers++;
+              avgResponseTime += server.response_time || 0;
             }
           }
-        } catch (fetchError: any) {
-          clearTimeout(timeoutId);
+
+          avgResponseTime = healthyServers > 0 ? avgResponseTime / healthyServers : 0;
+
+          // Overall status based on servers
+          const allHealthy = healthyServers === backendServers.length;
+          const someHealthy = healthyServers > 0;
+
+          baileysHealth = {
+            status: allHealthy ? "healthy" : someHealthy ? "degraded" : "down",
+            responseTime: Math.round(avgResponseTime),
+            lastChecked: new Date().toISOString(),
+            serverName: `${healthyServers}/${backendServers.length} servers`,
+            version: "Multi-Server",
+            connectedSessions: totalConnected,
+            message: `${healthyServers} healthy, ${totalConnected} total sessions`
+          };
+        } else {
+          // Fallback to old single-server check if no servers configured
+          const baileysUrl = import.meta.env.VITE_BAILEYS_SERVICE_URL || 'https://multi-wa-mate-production.up.railway.app';
+          const { count: connectedCount } = await supabase
+            .from("devices")
+            .select("server_id", { count: "exact" })
+            .eq("status", "connected");
+
+          const baileysStart = Date.now();
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
           
-          // Health endpoint failed, but check if service is actually working (devices connected)
-          if (connectedCount && connectedCount > 0) {
-            baileysHealth = {
-              status: "degraded",
-              responseTime: 0,
-              lastChecked: new Date().toISOString(),
-              serverName: serverName,
-              version: "Unknown",
-              connectedSessions: connectedCount,
-              message: `${connectedCount} sesi aktif (endpoint tidak dapat diakses)`
-            };
-          } else {
-            baileysHealth.message = fetchError.name === 'AbortError' 
-              ? 'Connection timeout' 
-              : fetchError.message || "Service tidak tersedia";
+          try {
+            const baileysResponse = await fetch(`${baileysUrl}/health`, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            const baileysLatency = Date.now() - baileysStart;
+
+            if (baileysResponse.ok) {
+              const baileysData = await baileysResponse.json();
+              baileysHealth = {
+                status: baileysLatency < 500 ? "healthy" : baileysLatency < 1000 ? "degraded" : "down",
+                responseTime: baileysLatency,
+                lastChecked: new Date().toISOString(),
+                serverName: "Legacy Server",
+                version: baileysData.version || "v1.0",
+                connectedSessions: connectedCount || 0,
+                message: `${connectedCount || 0} sessions (legacy mode)`
+              };
+            }
+          } catch (fetchError) {
+            clearTimeout(timeoutId);
+            baileysHealth.message = "No servers configured";
           }
         }
       } catch (baileysError: any) {
         console.error("Baileys health check error:", baileysError);
-        baileysHealth.message = baileysError.message || "Gagal memeriksa service";
+        baileysHealth.message = baileysError.message || "Failed to check servers";
       }
 
       // Check Redis (through edge function or direct check)
@@ -460,10 +458,20 @@ export const AdminSystemHealth = () => {
           {/* Baileys WhatsApp Service */}
           <Card className="hover:shadow-lg transition-shadow border-2 border-primary/20">
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-green-500" />
-                Baileys WhatsApp Service
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-green-500" />
+                  Backend Servers
+                </CardTitle>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => window.location.href = '/admin/server-management'}
+                  className="text-xs"
+                >
+                  Manage →
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">

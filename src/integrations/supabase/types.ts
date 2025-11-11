@@ -191,6 +191,66 @@ export type Database = {
         }
         Relationships: []
       }
+      backend_servers: {
+        Row: {
+          api_key: string | null
+          created_at: string
+          current_load: number | null
+          health_check_failures: number | null
+          id: string
+          is_active: boolean | null
+          is_healthy: boolean | null
+          last_health_check: string | null
+          max_capacity: number | null
+          metadata: Json | null
+          priority: number | null
+          region: string | null
+          response_time: number | null
+          server_name: string
+          server_type: string
+          server_url: string
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          created_at?: string
+          current_load?: number | null
+          health_check_failures?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_healthy?: boolean | null
+          last_health_check?: string | null
+          max_capacity?: number | null
+          metadata?: Json | null
+          priority?: number | null
+          region?: string | null
+          response_time?: number | null
+          server_name: string
+          server_type?: string
+          server_url: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          created_at?: string
+          current_load?: number | null
+          health_check_failures?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_healthy?: boolean | null
+          last_health_check?: string | null
+          max_capacity?: number | null
+          metadata?: Json | null
+          priority?: number | null
+          region?: string | null
+          response_time?: number | null
+          server_name?: string
+          server_type?: string
+          server_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       broadcast_templates: {
         Row: {
           category: string
@@ -482,6 +542,7 @@ export type Database = {
       devices: {
         Row: {
           api_key: string | null
+          assigned_server_id: string | null
           connection_method: string | null
           created_at: string
           device_name: string
@@ -501,6 +562,7 @@ export type Database = {
         }
         Insert: {
           api_key?: string | null
+          assigned_server_id?: string | null
           connection_method?: string | null
           created_at?: string
           device_name: string
@@ -520,6 +582,7 @@ export type Database = {
         }
         Update: {
           api_key?: string | null
+          assigned_server_id?: string | null
           connection_method?: string | null
           created_at?: string
           device_name?: string
@@ -537,7 +600,15 @@ export type Database = {
           user_id?: string
           webhook_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "devices_assigned_server_id_fkey"
+            columns: ["assigned_server_id"]
+            isOneToOne: false
+            referencedRelation: "backend_servers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
@@ -1246,6 +1317,41 @@ export type Database = {
           },
         ]
       }
+      server_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          log_type: string
+          message: string
+          server_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          log_type: string
+          message: string
+          server_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          log_type?: string
+          message?: string
+          server_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "server_logs_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "backend_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           auto_reply_enabled: boolean | null
@@ -1768,8 +1874,10 @@ export type Database = {
         }
         Returns: string
       }
+      check_server_health: { Args: { p_server_id: string }; Returns: Json }
       generate_api_key: { Args: never; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
+      get_best_available_server: { Args: never; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

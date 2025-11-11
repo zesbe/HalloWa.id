@@ -62,6 +62,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     { icon: FileText, label: "Konten Landing", path: "/admin/landing-content" },
     { icon: DollarSign, label: "Laporan Keuangan", path: "/admin/financial" },
     { icon: Activity, label: "Kesehatan Sistem", path: "/admin/system-health" },
+    { icon: Shield, label: "Manajemen Server", path: "/admin/server-management" },
     { icon: ListChecks, label: "Log Audit", path: "/admin/audit-logs" },
     { icon: Users, label: "Segmen Pengguna", path: "/admin/user-segments" },
     { icon: BarChart, label: "Analitik", path: "/admin/analytics" },
