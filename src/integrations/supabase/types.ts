@@ -306,6 +306,66 @@ export type Database = {
           },
         ]
       }
+      communication_logs: {
+        Row: {
+          clicked_at: string | null
+          content: string
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          opened_at: string | null
+          recipient_email: string | null
+          recipient_phone: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+          template_id: string | null
+          type: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          content: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          type: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          content?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           birthday: string | null
@@ -883,6 +943,51 @@ export type Database = {
           timestamp?: string
           to_number?: string
           type?: string | null
+        }
+        Relationships: []
+      }
+      notification_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          status: string
+          subject: string | null
+          type: string
+          updated_at: string | null
+          usage_count: number | null
+          variables: string[] | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          last_used_at?: string | null
+          name: string
+          status?: string
+          subject?: string | null
+          type: string
+          updated_at?: string | null
+          usage_count?: number | null
+          variables?: string[] | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          status?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          variables?: string[] | null
         }
         Relationships: []
       }

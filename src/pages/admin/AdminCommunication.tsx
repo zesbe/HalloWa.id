@@ -1,109 +1,70 @@
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, MessageSquare, Bell, Send, CheckCircle2, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Mail, MessageSquare, Bell, Send, CheckCircle2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-interface CommunicationStats {
-  totalSent: number;
-  emailsSent: number;
-  notificationsSent: number;
-  deliveryRate: number;
-  openRate: number;
-  clickRate: number;
-  recentMessages: Array<{
-    id: string;
-    type: string;
-    subject: string;
-    recipient: string;
-    status: string;
-    sent_at: string;
-  }>;
-  messagesByType: Array<{ type: string; count: number }>;
-}
-
 export const AdminCommunication = () => {
-  const [data, setData] = useState<CommunicationStats>({
-    totalSent: 0,
-    emailsSent: 0,
-    notificationsSent: 0,
-    deliveryRate: 0,
-    openRate: 0,
-    clickRate: 0,
-    recentMessages: [],
-    messagesByType: []
-  });
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['communication-stats'],
+    queryFn: async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  useEffect(() => {
-    fetchCommunicationStats();
-  }, []);
+      const { data: logs, error } = await supabase
+        .from('communication_logs')
+        .select('*')
+        .gte('sent_at', thirtyDaysAgo.toISOString());
 
-  const fetchCommunicationStats = async () => {
-    try {
-      // Simulated data - in real app, fetch from communication_logs table
-      const mockData: CommunicationStats = {
-        totalSent: 1247,
-        emailsSent: 823,
-        notificationsSent: 424,
-        deliveryRate: 98.5,
-        openRate: 42.3,
-        clickRate: 18.7,
-        recentMessages: [
-          {
-            id: "1",
-            type: "email",
-            subject: "Welcome to Premium Plan",
-            recipient: "user@example.com",
-            status: "delivered",
-            sent_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: "2",
-            type: "notification",
-            subject: "Subscription Expiring Soon",
-            recipient: "john@example.com",
-            status: "delivered",
-            sent_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: "3",
-            type: "email",
-            subject: "Payment Failed - Action Required",
-            recipient: "jane@example.com",
-            status: "opened",
-            sent_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: "4",
-            type: "notification",
-            subject: "New Feature Available",
-            recipient: "all_users",
-            status: "delivered",
-            sent_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-          }
-        ],
-        messagesByType: [
-          { type: "Welcome", count: 156 },
-          { type: "Subscription", count: 234 },
-          { type: "Payment", count: 189 },
-          { type: "Feature", count: 112 },
-          { type: "Support", count: 98 },
-          { type: "Marketing", count: 458 }
-        ]
+      if (error) throw error;
+
+      const totalSent = logs?.length || 0;
+      const emailsSent = logs?.filter(l => l.type === 'email').length || 0;
+      const notificationsSent = logs?.filter(l => l.type === 'notification').length || 0;
+      const delivered = logs?.filter(l => l.status === 'delivered' || l.status === 'opened' || l.status === 'clicked').length || 0;
+      const opened = logs?.filter(l => l.status === 'opened' || l.status === 'clicked').length || 0;
+      const clicked = logs?.filter(l => l.status === 'clicked').length || 0;
+
+      const deliveryRate = totalSent > 0 ? (delivered / totalSent) * 100 : 0;
+      const openRate = totalSent > 0 ? (opened / totalSent) * 100 : 0;
+      const clickRate = totalSent > 0 ? (clicked / totalSent) * 100 : 0;
+
+      const recentMessages = logs?.slice(0, 10).map(log => ({
+        id: log.id,
+        type: log.type,
+        subject: log.subject || 'No subject',
+        recipient: log.recipient_email || log.recipient_phone || 'Unknown',
+        status: log.status,
+        sent_at: log.sent_at
+      })) || [];
+
+      const typeGroups = logs?.reduce((acc, log) => {
+        const type = log.type;
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const messagesByType = Object.entries(typeGroups).map(([type, count]) => ({
+        type: type.charAt(0).toUpperCase() + type.slice(1),
+        count
+      }));
+
+      return {
+        totalSent,
+        emailsSent,
+        notificationsSent,
+        deliveryRate,
+        openRate,
+        clickRate,
+        recentMessages,
+        messagesByType
       };
-
-      setData(mockData);
-    } catch (error) {
-      console.error("Error fetching communication stats:", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  });
 
-  if (loading) {
+  if (isLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-screen">
@@ -142,7 +103,7 @@ export const AdminCommunication = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.totalSent.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{stats?.totalSent.toLocaleString() || 0}</div>
               <p className="text-xs text-muted-foreground mt-1">Last 30 days</p>
             </CardContent>
           </Card>
@@ -155,9 +116,9 @@ export const AdminCommunication = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.emailsSent.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{stats?.emailsSent.toLocaleString() || 0}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                {((data.emailsSent / data.totalSent) * 100).toFixed(1)}% of total
+                {stats?.totalSent ? ((stats.emailsSent / stats.totalSent) * 100).toFixed(1) : 0}% of total
               </p>
             </CardContent>
           </Card>
@@ -170,9 +131,9 @@ export const AdminCommunication = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.notificationsSent.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{stats?.notificationsSent.toLocaleString() || 0}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                {((data.notificationsSent / data.totalSent) * 100).toFixed(1)}% of total
+                {stats?.totalSent ? ((stats.notificationsSent / stats.totalSent) * 100).toFixed(1) : 0}% of total
               </p>
             </CardContent>
           </Card>
@@ -189,12 +150,12 @@ export const AdminCommunication = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-500">
-                {data.deliveryRate.toFixed(1)}%
+                {stats?.deliveryRate.toFixed(1) || 0}%
               </div>
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-2">
                 <div
                   className="h-full bg-green-500"
-                  style={{ width: `${data.deliveryRate}%` }}
+                  style={{ width: `${stats?.deliveryRate || 0}%` }}
                 />
               </div>
             </CardContent>
@@ -205,11 +166,11 @@ export const AdminCommunication = () => {
               <CardTitle className="text-sm">Open Rate</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.openRate.toFixed(1)}%</div>
+              <div className="text-2xl font-bold">{stats?.openRate.toFixed(1) || 0}%</div>
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-2">
                 <div
                   className="h-full bg-primary"
-                  style={{ width: `${data.openRate}%` }}
+                  style={{ width: `${stats?.openRate || 0}%` }}
                 />
               </div>
             </CardContent>
@@ -220,11 +181,11 @@ export const AdminCommunication = () => {
               <CardTitle className="text-sm">Click Rate</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.clickRate.toFixed(1)}%</div>
+              <div className="text-2xl font-bold">{stats?.clickRate.toFixed(1) || 0}%</div>
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-2">
                 <div
                   className="h-full bg-secondary"
-                  style={{ width: `${data.clickRate}%` }}
+                  style={{ width: `${stats?.clickRate || 0}%` }}
                 />
               </div>
             </CardContent>
@@ -238,8 +199,8 @@ export const AdminCommunication = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.messagesByType.map((item) => {
-                const percentage = (item.count / data.totalSent) * 100;
+              {stats?.messagesByType && stats.messagesByType.length > 0 ? stats.messagesByType.map((item) => {
+                const percentage = stats.totalSent > 0 ? (item.count / stats.totalSent) * 100 : 0;
                 return (
                   <div key={item.type}>
                     <div className="flex items-center justify-between mb-1">
@@ -256,7 +217,11 @@ export const AdminCommunication = () => {
                     </div>
                   </div>
                 );
-              })}
+              }) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No message data available
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -268,7 +233,7 @@ export const AdminCommunication = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.recentMessages.map((msg) => (
+              {stats?.recentMessages && stats.recentMessages.length > 0 ? stats.recentMessages.map((msg) => (
                 <div key={msg.id} className="border-b pb-3 last:border-0">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -293,7 +258,11 @@ export const AdminCommunication = () => {
                     {new Date(msg.sent_at).toLocaleString("id-ID")}
                   </p>
                 </div>
-              ))}
+              )) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No recent messages
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
