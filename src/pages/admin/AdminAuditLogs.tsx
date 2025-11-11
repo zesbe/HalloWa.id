@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Search, Filter } from "lucide-react";
+import { FileText, Search, Filter, Activity } from "lucide-react";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -43,9 +44,58 @@ export const AdminAuditLogs = () => {
   const [filterAction, setFilterAction] = useState("all");
   const [filterEntity, setFilterEntity] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [isRealTimeActive, setIsRealTimeActive] = useState(false);
 
   useEffect(() => {
     fetchLogs();
+
+    // Setup real-time subscription
+    const channel = supabase
+      .channel('audit-logs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'audit_logs'
+        },
+        async (payload) => {
+          console.log('New audit log:', payload);
+          
+          // Fetch admin profile for new log
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .eq('id', payload.new.admin_id)
+            .single();
+
+          const newLog = {
+            ...payload.new,
+            profiles: profile || { full_name: "Unknown", email: "N/A" }
+          } as AuditLog;
+
+          setLogs(prev => [newLog, ...prev]);
+          toast.success('New audit log recorded', {
+            description: `${newLog.action} on ${newLog.entity_type}`,
+            duration: 3000
+          });
+          
+          // Flash indicator
+          setIsRealTimeActive(true);
+          setTimeout(() => setIsRealTimeActive(false), 2000);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Real-time audit logs active');
+          setIsRealTimeActive(true);
+          setTimeout(() => setIsRealTimeActive(false), 2000);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -129,14 +179,23 @@ export const AdminAuditLogs = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 p-4 sm:p-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-            <FileText className="w-8 h-8" />
-            Audit Logs
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-            Track all admin activities and changes
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+              <FileText className="w-8 h-8" />
+              Audit Logs
+            </h1>
+            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+              Track all admin activities and changes
+            </p>
+          </div>
+          <Badge 
+            variant={isRealTimeActive ? "default" : "secondary"}
+            className="flex items-center gap-2 transition-all"
+          >
+            <Activity className={`w-3 h-3 ${isRealTimeActive ? 'animate-pulse' : ''}`} />
+            {isRealTimeActive ? 'Live' : 'Real-time Active'}
+          </Badge>
         </div>
 
         {/* Filters */}
