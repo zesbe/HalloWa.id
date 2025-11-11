@@ -10,9 +10,10 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MessageSquare, Send, Users, Radio, AlertCircle, CheckCircle2, Loader2, Filter } from "lucide-react";
+import { MessageSquare, Send, Users, Radio, AlertCircle, CheckCircle2, Loader2, Filter, Plus, Smartphone } from "lucide-react";
 import { logAudit } from "@/utils/auditLogger";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useNavigate } from "react-router-dom";
 
 interface Contact {
   id: string;
@@ -39,6 +40,7 @@ interface BroadcastHistory {
 }
 
 export const AdminBroadcast = () => {
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
@@ -372,13 +374,26 @@ export const AdminBroadcast = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Connected Devices
+                <Smartphone className="w-4 h-4" />
+                My Devices
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{devices.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Available for broadcasting</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {devices.length > 0 ? "Connected & ready" : "No devices connected"}
+              </p>
+              {devices.length === 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={() => navigate("/devices")}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Device
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -413,10 +428,23 @@ export const AdminBroadcast = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Select Device (Optional)</Label>
+              <div className="flex items-center justify-between">
+                <Label>Select Device (Optional)</Label>
+                {devices.length === 0 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => navigate("/devices")}
+                    className="h-auto p-0 text-xs"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Connect Device
+                  </Button>
+                )}
+              </div>
               <Select value={selectedDevice} onValueChange={setSelectedDevice}>
                 <SelectTrigger>
-                  <SelectValue placeholder={devices.length === 0 ? "Will use cloud service" : "Choose WhatsApp device"} />
+                  <SelectValue placeholder={devices.length === 0 ? "No devices - will use cloud" : "Choose your WhatsApp device"} />
                 </SelectTrigger>
                 <SelectContent>
                   {devices.length === 0 ? (
@@ -431,13 +459,18 @@ export const AdminBroadcast = () => {
                 </SelectContent>
               </Select>
               {devices.length === 0 ? (
-                <p className="text-xs text-blue-500 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  Will send via cloud service (Baileys)
-                </p>
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    No device connected. Messages will send via cloud service.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Connect your WhatsApp device for better delivery rates.
+                  </p>
+                </div>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Leave empty to use cloud service
+                  Using your device: {devices.find(d => d.id === selectedDevice)?.device_name || "None selected (will use cloud)"}
                 </p>
               )}
             </div>

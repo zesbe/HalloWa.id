@@ -20,7 +20,8 @@ import {
   MessageSquare,
   TrendingDown,
   Send,
-  Mail
+  Mail,
+  Smartphone
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,8 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
+    { icon: Smartphone, label: "My Devices", path: "/devices" },
+    { icon: MessageSquare, label: "Broadcast", path: "/admin/broadcast" },
     { icon: Users, label: "Kelola User", path: "/admin/users" },
     { icon: CreditCard, label: "Kelola Plan", path: "/admin/plans" },
     { icon: Video, label: "Kelola Tutorial", path: "/admin/tutorials" },
@@ -60,7 +63,6 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     { icon: CreditCard, label: "Payments", path: "/admin/payment-analytics" },
     { icon: Send, label: "Communication", path: "/admin/communication" },
     { icon: Mail, label: "Templates", path: "/admin/notification-templates" },
-    { icon: MessageSquare, label: "Broadcast", path: "/admin/broadcast" },
   ];
 
   return (
