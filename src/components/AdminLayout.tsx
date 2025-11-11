@@ -190,10 +190,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t shadow-lg">
           <div className="flex items-center justify-around h-16 px-2">
             {mobileBottomNav.map((item) => {
-              const isActive = item.path ? location.pathname === item.path : false;
+              const isActive = item.path ? location.pathname === item.path : sidebarOpen && item.action === "menu";
               const handleClick = () => {
                 if (item.action === "menu") {
-                  setSidebarOpen(true);
+                  setSidebarOpen(!sidebarOpen);
                 } else if (item.path) {
                   navigate(item.path);
                 }
