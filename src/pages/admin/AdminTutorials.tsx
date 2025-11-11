@@ -201,11 +201,11 @@ export const AdminTutorials = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Kelola Tutorial</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Kelola Tutorial</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Manage tutorial videos untuk customer
             </p>
           </div>
@@ -219,7 +219,7 @@ export const AdminTutorials = () => {
                 Tambah Tutorial
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingTutorial ? "Edit Tutorial" : "Tambah Tutorial Baru"}
@@ -350,8 +350,9 @@ export const AdminTutorials = () => {
           </Card>
         ) : (
           <Card>
-            <CardContent className="p-6">
-              <div className="overflow-x-auto">
+            <CardContent className="p-4 sm:p-6">
+              {/* Desktop Table View */}
+              <div className="hidden lg:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
@@ -448,6 +449,96 @@ export const AdminTutorials = () => {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="lg:hidden space-y-4">
+                {tutorials.map((tutorial) => (
+                  <Card key={tutorial.id}>
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        {/* Thumbnail */}
+                        <div className="w-full h-40 rounded overflow-hidden bg-muted">
+                          {tutorial.thumbnail_url ? (
+                            <img
+                              src={tutorial.thumbnail_url}
+                              alt={tutorial.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = "https://via.placeholder.com/320x180?text=Video";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Video className="w-12 h-12 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-semibold line-clamp-2 flex-1">{tutorial.title}</h3>
+                            <Badge className={tutorial.is_published ? "bg-green-500 shrink-0" : "bg-gray-500 shrink-0"}>
+                              {tutorial.is_published ? "Published" : "Draft"}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            {tutorial.category && (
+                              <Badge variant="outline">{tutorial.category}</Badge>
+                            )}
+                            <span>{tutorial.duration || "-"}</span>
+                            <div className="flex items-center gap-1">
+                              <Eye className="w-4 h-4" />
+                              <span>{tutorial.view_count}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(tutorial.video_url, '_blank')}
+                            className="w-full"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Lihat
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => togglePublish(tutorial)}
+                            className="w-full"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {tutorial.is_published ? "Hide" : "Publish"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEdit(tutorial)}
+                            className="w-full"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(tutorial.id)}
+                            className="w-full"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Hapus
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </CardContent>
           </Card>

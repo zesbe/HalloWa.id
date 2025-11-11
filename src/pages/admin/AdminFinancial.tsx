@@ -186,17 +186,19 @@ export default function AdminFinancial() {
 
         <Card className="p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-bold mb-4">Riwayat Transaksi</h2>
-          <div className="overflow-x-auto">
+          
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[120px]">Order ID</TableHead>
-                  <TableHead className="hidden md:table-cell">Customer</TableHead>
-                  <TableHead className="hidden lg:table-cell">Paket</TableHead>
-                  <TableHead className="hidden sm:table-cell">Metode</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Paket</TableHead>
+                  <TableHead>Metode</TableHead>
                   <TableHead>Jumlah</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">Tanggal</TableHead>
+                  <TableHead>Tanggal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,15 +211,15 @@ export default function AdminFinancial() {
                 ) : (
                   payments.map((payment) => (
                     <TableRow key={payment.id}>
-                      <TableCell className="font-mono text-xs sm:text-sm">{payment.order_id}</TableCell>
-                      <TableCell className="hidden md:table-cell">{payment.user?.full_name || '-'}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{payment.plans?.name || '-'}</TableCell>
-                      <TableCell className="hidden sm:table-cell uppercase text-xs sm:text-sm">{payment.payment_method}</TableCell>
-                      <TableCell className="font-semibold text-xs sm:text-sm whitespace-nowrap">
+                      <TableCell className="font-mono text-sm">{payment.order_id}</TableCell>
+                      <TableCell>{payment.user?.full_name || '-'}</TableCell>
+                      <TableCell>{payment.plans?.name || '-'}</TableCell>
+                      <TableCell className="uppercase text-sm">{payment.payment_method}</TableCell>
+                      <TableCell className="font-semibold whitespace-nowrap">
                         Rp {Number(payment.total_payment).toLocaleString('id-ID')}
                       </TableCell>
                       <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap">
                         {new Date(payment.created_at).toLocaleDateString('id-ID')}
                       </TableCell>
                     </TableRow>
@@ -225,6 +227,63 @@ export default function AdminFinancial() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-3">
+            {payments.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                Belum ada transaksi
+              </div>
+            ) : (
+              payments.map((payment) => (
+                <Card key={payment.id} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-xs text-muted-foreground mb-1">
+                          {payment.order_id}
+                        </p>
+                        <p className="font-semibold truncate">
+                          {payment.user?.full_name || 'Unknown'}
+                        </p>
+                      </div>
+                      {getStatusBadge(payment.status)}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-muted-foreground text-xs">Paket:</p>
+                        <p className="font-medium">{payment.plans?.name || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Metode:</p>
+                        <p className="font-medium uppercase">{payment.payment_method}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Total</p>
+                        <p className="text-lg font-bold">
+                          Rp {Number(payment.total_payment).toLocaleString('id-ID')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">Tanggal</p>
+                        <p className="text-sm">
+                          {new Date(payment.created_at).toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </Card>
       </div>
