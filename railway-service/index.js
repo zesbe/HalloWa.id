@@ -15,6 +15,7 @@ const { checkAutoPostSchedules } = require('./auto-post-handler');
 const { setupCRMMessageListeners } = require('./crm-message-handler');
 const { createHTTPServer } = require('./http-server');
 const { validatePhoneNumber, validateMessage, validateMediaUrl } = require('./auth-utils');
+const { logger } = require('./logger');
 
 // Supabase config dari environment variables
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -292,7 +293,7 @@ async function connectWhatsApp(device, isRecovery = false) {
     const phoneForPairing = deviceConfig?.phone_for_pairing;
 
     if (isPairingMode) {
-      console.log(`🔑 [${deviceName}] Pairing mode enabled for phone: ${phoneForPairing}`);
+      logger.info(`🔑 [${deviceName}] Pairing mode enabled`);
     }
 
     // Get latest WhatsApp Web version
