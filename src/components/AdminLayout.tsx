@@ -44,7 +44,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: Smartphone, label: "My Devices", path: "/devices" },
+    { icon: Smartphone, label: "My Devices", path: "/admin/devices" },
     { icon: MessageSquare, label: "Broadcast", path: "/admin/broadcast" },
     { icon: Users, label: "Kelola User", path: "/admin/users" },
     { icon: CreditCard, label: "Kelola Plan", path: "/admin/plans" },

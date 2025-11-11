@@ -388,7 +388,7 @@ export const AdminBroadcast = () => {
                   variant="outline"
                   size="sm"
                   className="w-full mt-2"
-                  onClick={() => navigate("/devices")}
+                  onClick={() => navigate("/admin/devices")}
                 >
                   <Plus className="w-3 h-3 mr-1" />
                   Add Device
@@ -431,12 +431,12 @@ export const AdminBroadcast = () => {
               <div className="flex items-center justify-between">
                 <Label>Select Device (Optional)</Label>
                 {devices.length === 0 && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => navigate("/devices")}
-                    className="h-auto p-0 text-xs"
-                  >
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => navigate("/admin/devices")}
+                  className="h-auto p-0 text-xs"
+                >
                     <Plus className="w-3 h-3 mr-1" />
                     Connect Device
                   </Button>
