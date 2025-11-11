@@ -17,12 +17,10 @@ import {
   Activity,
   ListChecks,
   BarChart,
-  MessageSquare,
-  TrendingDown,
-  Send,
   Mail,
   Smartphone,
-  Bell
+  Bell,
+  MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,12 +58,9 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     { icon: BarChart, label: "Analytics", path: "/admin/analytics" },
     { icon: DollarSign, label: "Revenue", path: "/admin/revenue" },
     { icon: Activity, label: "User Activity", path: "/admin/user-activity" },
-    { icon: MessageSquare, label: "Messages", path: "/admin/message-analytics" },
     { icon: CreditCard, label: "Subscriptions", path: "/admin/subscription-analytics" },
-    { icon: TrendingDown, label: "Churn Analysis", path: "/admin/churn-analysis" },
     { icon: CreditCard, label: "Payments", path: "/admin/payment-analytics" },
-    { icon: Send, label: "Communication", path: "/admin/communication" },
-    { icon: Mail, label: "Templates", path: "/admin/notification-templates" },
+    { icon: Mail, label: "Notification Templates", path: "/admin/notification-templates" },
   ];
 
   return (

@@ -41,11 +41,8 @@ import AdminUserSegments from "./pages/admin/AdminUserSegments";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminUserActivity from "./pages/admin/AdminUserActivity";
-import AdminMessageAnalytics from "./pages/admin/AdminMessageAnalytics";
 import AdminSubscriptionAnalytics from "./pages/admin/AdminSubscriptionAnalytics";
-import AdminChurnAnalysis from "./pages/admin/AdminChurnAnalysis";
 import AdminPaymentAnalytics from "./pages/admin/AdminPaymentAnalytics";
-import AdminCommunication from "./pages/admin/AdminCommunication";
 import AdminNotificationTemplates from "./pages/admin/AdminNotificationTemplates";
 import AdminBroadcast from "./pages/admin/AdminBroadcast";
 import AdminDevices from "./pages/admin/AdminDevices";
@@ -114,11 +111,8 @@ const App = () => (
             <Route path="/admin/analytics" element={<ProtectedRoute requiredRole="admin"><AdminAnalytics /></ProtectedRoute>} />
             <Route path="/admin/revenue" element={<ProtectedRoute requiredRole="admin"><AdminRevenue /></ProtectedRoute>} />
             <Route path="/admin/user-activity" element={<ProtectedRoute requiredRole="admin"><AdminUserActivity /></ProtectedRoute>} />
-            <Route path="/admin/message-analytics" element={<ProtectedRoute requiredRole="admin"><AdminMessageAnalytics /></ProtectedRoute>} />
             <Route path="/admin/subscription-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSubscriptionAnalytics /></ProtectedRoute>} />
-            <Route path="/admin/churn-analysis" element={<ProtectedRoute requiredRole="admin"><AdminChurnAnalysis /></ProtectedRoute>} />
             <Route path="/admin/payment-analytics" element={<ProtectedRoute requiredRole="admin"><AdminPaymentAnalytics /></ProtectedRoute>} />
-            <Route path="/admin/communication" element={<ProtectedRoute requiredRole="admin"><AdminCommunication /></ProtectedRoute>} />
             <Route path="/admin/notification-templates" element={<ProtectedRoute requiredRole="admin"><AdminNotificationTemplates /></ProtectedRoute>} />
             <Route path="/admin/broadcast" element={<ProtectedRoute requiredRole="admin"><AdminBroadcast /></ProtectedRoute>} />
             <Route path="/admin/devices" element={<ProtectedRoute requiredRole="admin"><AdminDevices /></ProtectedRoute>} />
