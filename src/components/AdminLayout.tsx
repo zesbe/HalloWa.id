@@ -42,24 +42,24 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   }, [user]);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: Smartphone, label: "My Devices", path: "/admin/devices" },
-    { icon: MessageSquare, label: "Broadcast", path: "/admin/broadcast" },
-    { icon: FileText, label: "Templates", path: "/admin/templates" },
-    { icon: Bell, label: "Reminders", path: "/admin/reminders" },
+    { icon: LayoutDashboard, label: "Dasbor", path: "/admin/dashboard" },
+    { icon: Smartphone, label: "Perangkat Saya", path: "/admin/devices" },
+    { icon: MessageSquare, label: "Siaran", path: "/admin/broadcast" },
+    { icon: FileText, label: "Template", path: "/admin/templates" },
+    { icon: Bell, label: "Pengingat", path: "/admin/reminders" },
     { icon: Users, label: "Kelola User", path: "/admin/users" },
-    { icon: CreditCard, label: "Kelola Plan", path: "/admin/plans" },
+    { icon: CreditCard, label: "Kelola Paket", path: "/admin/plans" },
     { icon: Video, label: "Kelola Tutorial", path: "/admin/tutorials" },
-    { icon: FileText, label: "Landing Content", path: "/admin/landing-content" },
+    { icon: FileText, label: "Konten Landing", path: "/admin/landing-content" },
     { icon: DollarSign, label: "Laporan Keuangan", path: "/admin/financial" },
-    { icon: Activity, label: "System Health", path: "/admin/system-health" },
-    { icon: ListChecks, label: "Audit Logs", path: "/admin/audit-logs" },
-    { icon: Users, label: "User Segments", path: "/admin/user-segments" },
-    { icon: BarChart, label: "Analytics", path: "/admin/analytics" },
-    { icon: DollarSign, label: "Revenue", path: "/admin/revenue" },
-    { icon: Activity, label: "User Activity", path: "/admin/user-activity" },
-    { icon: CreditCard, label: "Subscriptions", path: "/admin/subscription-analytics" },
-    { icon: CreditCard, label: "Payments", path: "/admin/payment-analytics" },
+    { icon: Activity, label: "Kesehatan Sistem", path: "/admin/system-health" },
+    { icon: ListChecks, label: "Log Audit", path: "/admin/audit-logs" },
+    { icon: Users, label: "Segmen Pengguna", path: "/admin/user-segments" },
+    { icon: BarChart, label: "Analitik", path: "/admin/analytics" },
+    { icon: DollarSign, label: "Pendapatan", path: "/admin/revenue" },
+    { icon: Activity, label: "Aktivitas Pengguna", path: "/admin/user-activity" },
+    { icon: CreditCard, label: "Langganan", path: "/admin/subscription-analytics" },
+    { icon: CreditCard, label: "Pembayaran", path: "/admin/payment-analytics" },
   ];
 
   return (
@@ -151,7 +151,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                 className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950 shrink-0"
               >
                 <LogOut className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden sm:inline">Keluar</span>
               </Button>
             </div>
           </div>
