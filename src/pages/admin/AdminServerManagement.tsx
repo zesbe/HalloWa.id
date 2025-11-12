@@ -29,6 +29,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { isValidURL, sanitizeURL } from "@/utils/inputValidation";
 
 interface BackendServer {
   id: string;
@@ -99,12 +100,42 @@ export const AdminServerManagement = () => {
     e.preventDefault();
     
     try {
+      // Validate server URL before saving
+      if (!formData.server_url || formData.server_url.trim() === "") {
+        toast.error("URL server harus diisi");
+        return;
+      }
+
+      // Validate URL length (max 2048 characters)
+      if (formData.server_url.length > 2048) {
+        toast.error("URL server terlalu panjang (maksimal 2048 karakter)");
+        return;
+      }
+
+      // Validate URL format and security
+      if (!isValidURL(formData.server_url)) {
+        toast.error("URL server tidak valid. Gunakan format http:// atau https:// dan hindari URL internal/localhost");
+        return;
+      }
+
+      // Sanitize the URL
+      const sanitizedUrl = sanitizeURL(formData.server_url);
+      if (!sanitizedUrl) {
+        toast.error("URL server mengandung protokol berbahaya atau menargetkan jaringan private");
+        return;
+      }
+
+      const validatedFormData = {
+        ...formData,
+        server_url: sanitizedUrl
+      };
+
       if (editingServer) {
         // Update existing server
         const { error } = await supabase
           .from("backend_servers")
           .update({
-            ...formData,
+            ...validatedFormData,
             updated_at: new Date().toISOString()
           })
           .eq("id", editingServer.id);
@@ -115,7 +146,7 @@ export const AdminServerManagement = () => {
         // Create new server
         const { data: newServer, error } = await supabase
           .from("backend_servers")
-          .insert([formData])
+          .insert([validatedFormData])
           .select()
           .single();
 
@@ -141,9 +172,40 @@ export const AdminServerManagement = () => {
 
   const performHealthCheck = async (server: BackendServer) => {
     try {
+      // Validate URL before making health check request (SSRF protection)
+      if (!server.server_url || !isValidURL(server.server_url)) {
+        toast.error(`URL server tidak valid: ${server.server_name}`);
+        
+        await supabase
+          .from("backend_servers")
+          .update({
+            is_healthy: false,
+            last_health_check: new Date().toISOString(),
+            health_check_failures: server.health_check_failures + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", server.id);
+        
+        await supabase.from("server_logs").insert([{
+          server_id: server.id,
+          log_type: "error",
+          message: "Health check failed: Invalid or dangerous URL",
+          details: { url: server.server_url }
+        }]);
+        
+        loadServers();
+        return;
+      }
+
       const startTime = Date.now();
       
-      const response = await fetch(`${server.server_url}/health`, {
+      // Use sanitized URL for fetch
+      const sanitizedUrl = sanitizeURL(server.server_url);
+      if (!sanitizedUrl) {
+        throw new Error("URL mengandung protokol berbahaya");
+      }
+
+      const response = await fetch(`${sanitizedUrl}/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
