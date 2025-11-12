@@ -5,6 +5,25 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
+ * Convert Long objects to regular numbers
+ * Baileys uses Long objects for 64-bit integers which need conversion
+ */
+function toLong(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  // Check if it's a Long object (has low and high properties)
+  if (typeof value === 'object' && ('low' in value || 'high' in value)) {
+    // Convert Long object to number
+    const low = value.low >>> 0; // Convert to unsigned 32-bit
+    const high = (value.high >>> 0) * 0x100000000; // Shift high 32 bits
+    return low + high;
+  }
+  // If it's already a number or string, convert to number
+  return typeof value === 'string' ? parseInt(value, 10) : Number(value);
+}
+
+/**
  * Save incoming/outgoing message to database for CRM
  */
 async function saveMessageToDatabase(deviceId, userId, messageData) {
@@ -64,23 +83,23 @@ async function saveMessageToDatabase(deviceId, userId, messageData) {
       messageContent = message.imageMessage.caption || '';
       caption = message.imageMessage.caption;
       mediaMimeType = message.imageMessage.mimetype;
-      mediaSize = message.imageMessage.fileLength;
+      mediaSize = toLong(message.imageMessage.fileLength);
       actualMessageType = 'image';
     } else if (message.videoMessage) {
       messageContent = message.videoMessage.caption || '';
       caption = message.videoMessage.caption;
       mediaMimeType = message.videoMessage.mimetype;
-      mediaSize = message.videoMessage.fileLength;
+      mediaSize = toLong(message.videoMessage.fileLength);
       actualMessageType = 'video';
     } else if (message.documentMessage) {
       messageContent = message.documentMessage.fileName || 'Document';
       mediaMimeType = message.documentMessage.mimetype;
-      mediaSize = message.documentMessage.fileLength;
+      mediaSize = toLong(message.documentMessage.fileLength);
       actualMessageType = 'document';
     } else if (message.audioMessage) {
       messageContent = 'Voice message';
       mediaMimeType = message.audioMessage.mimetype;
-      mediaSize = message.audioMessage.fileLength;
+      mediaSize = toLong(message.audioMessage.fileLength);
       actualMessageType = 'audio';
     } else if (message.stickerMessage) {
       messageContent = 'Sticker';
@@ -93,14 +112,17 @@ async function saveMessageToDatabase(deviceId, userId, messageData) {
     // Validate and format timestamp
     let messageTimestamp;
     try {
-      if (key.timestamp && !isNaN(key.timestamp)) {
-        // Convert WhatsApp timestamp (seconds) to milliseconds
-        const timestampMs = typeof key.timestamp === 'string'
-          ? parseInt(key.timestamp) * 1000
-          : key.timestamp * 1000;
-        messageTimestamp = new Date(timestampMs).toISOString();
+      if (key.timestamp) {
+        // Convert Long object to number if needed, then to milliseconds
+        const timestampSeconds = toLong(key.timestamp);
+        if (timestampSeconds && !isNaN(timestampSeconds)) {
+          const timestampMs = timestampSeconds * 1000;
+          messageTimestamp = new Date(timestampMs).toISOString();
+        } else {
+          messageTimestamp = new Date().toISOString();
+        }
       } else {
-        // Fallback to current time if timestamp is invalid
+        // Fallback to current time if timestamp is missing
         messageTimestamp = new Date().toISOString();
       }
     } catch (error) {
