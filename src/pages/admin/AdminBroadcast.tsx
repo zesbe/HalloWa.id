@@ -302,18 +302,31 @@ export const AdminBroadcast = () => {
               }
             });
 
-            if (error || !data?.success) {
+            if (error) {
               failedCount++;
-              console.error(`Failed to send to ${contact.phone}:`, error || data);
+              console.error(`❌ Failed to send to ${contact.name} (${contact.phone}):`, {
+                error: error.message || error,
+                context: error.context
+              });
+            } else if (!data?.success) {
+              failedCount++;
+              console.error(`❌ Failed to send to ${contact.name} (${contact.phone}):`, {
+                response: data,
+                error: data?.error
+              });
             } else {
               successCount++;
+              console.log(`✅ Sent to ${contact.name} (${contact.phone}) via ${data.method}`);
             }
 
             // Tambahkan delay kecil untuk menghindari rate limit
             await new Promise(resolve => setTimeout(resolve, 1500));
-          } catch (err) {
+          } catch (err: any) {
             failedCount++;
-            console.error(`Error sending to ${contact.phone}:`, err);
+            console.error(`❌ Exception sending to ${contact.name} (${contact.phone}):`, {
+              error: err.message,
+              stack: err.stack
+            });
           }
         }
 

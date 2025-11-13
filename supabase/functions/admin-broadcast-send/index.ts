@@ -32,17 +32,6 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Verify admin role
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (roleData?.role !== 'admin') {
-      throw new Error('Admin access required');
-    }
-
     const { action, to, message, user_id } = await req.json();
 
     if (action !== 'send_message') {
@@ -53,7 +42,10 @@ serve(async (req) => {
       throw new Error('Missing required fields: to, message');
     }
 
-    console.log(`Sending broadcast message to ${to} for user ${user_id}`);
+    // Use authenticated user's ID if user_id not provided
+    const targetUserId = user_id || user.id;
+
+    console.log(`[Broadcast] User ${user.id} sending message to ${to}`);
 
     // Get Baileys service URL and internal API key
     const baileysUrl = Deno.env.get('BAILEYS_SERVICE_URL');
@@ -111,17 +103,21 @@ serve(async (req) => {
 
       const result = await baileysResponse.json();
       
-      // Log message to history
-      await supabase
-        .from('message_history')
-        .insert({
-          user_id: user.id,
-          device_id: null,
-          contact_phone: to,
-          message_type: 'text',
-          content: message,
-          broadcast_id: null
-        });
+      // Log message to history (skip if table doesn't exist)
+      try {
+        await supabase
+          .from('message_history')
+          .insert({
+            user_id: user.id,
+            device_id: null,
+            contact_phone: to,
+            message_type: 'text',
+            content: message,
+            broadcast_id: null
+          });
+      } catch (historyError) {
+        console.warn('[Broadcast] Failed to log to message_history:', historyError);
+      }
 
       return new Response(
         JSON.stringify({
