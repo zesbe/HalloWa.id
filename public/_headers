@@ -15,12 +15,9 @@
 
   # 🛡️ Content Security Policy (CSP)
   # Comprehensive XSS protection with strict source whitelisting
-  # NOTE: For production, remove 'unsafe-inline' and 'unsafe-eval' from script-src
+  # NOTE: 'unsafe-inline' and 'unsafe-eval' are required for Vite HMR in development
+  # frame-ancestors directive controls iframe embedding (replaces X-Frame-Options)
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://*.railway.app https://*.upstash.io https://opengraph.b-cdn.net wss://*.supabase.co; media-src 'self' https: blob: data:; object-src 'none'; frame-ancestors 'self' https://*.lovable.dev https://*.lovable.app http://localhost:*; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
-
-  # 🛡️ X-Frame-Options
-  # Prevent clickjacking attacks by disallowing iframe embedding
-  
 
   # 🛡️ X-Content-Type-Options
   # Prevent MIME-sniffing attacks
@@ -47,10 +44,13 @@
   X-Download-Options: noopen
   X-Permitted-Cross-Domain-Policies: none
 
-  # 🔐 Cross-Origin Policies (Recommended for enhanced security)
-  Cross-Origin-Embedder-Policy: require-corp
-  Cross-Origin-Opener-Policy: same-origin
-  Cross-Origin-Resource-Policy: same-origin
+  # 🔐 Cross-Origin Policies
+  # NOTE: COEP/COOP/CORP headers are DISABLED because they break:
+  # - External resources (Google Fonts, CDN images, OpenGraph)
+  # - Supabase authentication (OAuth redirects)
+  # - Third-party integrations
+  # For applications using external APIs and resources, these headers are too restrictive.
+  # Security is maintained through CSP and other headers above.
 
 # ===============================================
 # Static Assets (Aggressive Caching)
