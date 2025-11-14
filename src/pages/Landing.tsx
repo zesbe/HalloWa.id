@@ -149,7 +149,7 @@ const Landing = () => {
         .select('*')
         .order('order_index');
 
-      if (features) {
+      if (features && features.length > 0) {
         setFeaturesData(features);
       }
 
@@ -174,11 +174,14 @@ const Landing = () => {
         .eq('is_active', true)
         .order('price');
 
-      if (plans) {
+      if (plans && plans.length > 0) {
         setPlansData(plans);
       }
     } catch (error) {
-      console.error('Error fetching landing content:', error);
+      // Silently handle errors - use default fallback content
+      if (import.meta.env.DEV) {
+        console.error('Error fetching landing content:', error);
+      }
       // Set default About content on error
       setAboutData({
         title: 'Tentang HalloWa',
@@ -314,10 +317,6 @@ const Landing = () => {
       answer: "Kami menyediakan 24/7 customer support via live chat, email, dan WhatsApp. Response time rata-rata kurang dari 5 menit."
     }
   ];
-
-  if (!isReady) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-green-50/30 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-hidden">
