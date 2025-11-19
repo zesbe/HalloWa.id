@@ -137,9 +137,15 @@ serve(async (req) => {
         signal: AbortSignal.timeout(10000) // 10 second timeout
       });
 
-      isHealthy = response.ok;
-      if (!isHealthy) {
+      // Log response status for easier debugging
+      console.log('Health check response status:', response.status, response.statusText);
+
+      // Consider server healthy as long as it's reachable and not returning 5xx errors
+      if (response.status >= 500 || response.status === 0) {
+        isHealthy = false;
         errorMessage = `Health check failed with status ${response.status}`;
+      } else {
+        isHealthy = true;
       }
     } catch (error: any) {
       isHealthy = false;
