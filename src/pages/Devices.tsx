@@ -330,7 +330,7 @@ export const Devices = () => {
       setConnectionStatus(method === 'qr' ? "generating_qr" : "generating_pairing");
       toast.info(method === 'qr' ? "Menghubungkan ke WhatsApp..." : "Membuat kode pairing...", { duration: 2000 });
 
-      // Poll updates from DB and fetch ephemeral codes from Edge Function (Redis)
+      // Poll updates from DB and fetch ephemeral codes from Edge Function (Supabase Database)
       const interval = setInterval(async () => {
         // 1) Read latest device row
         const { data: row, error: rowError } = await supabase
@@ -344,31 +344,43 @@ export const Devices = () => {
           return;
         }
 
-        // 2) Fetch QR/Pairing codes from Edge Function (stored in Redis)
+        // 2) Fetch QR/Pairing codes from Edge Function (stored in Supabase Database)
         let qrCode: string | null = null;
         let pairingCode: string | null = null;
         try {
-          const { data: codes, error: fnError } = await supabase.functions.invoke('get-device-qr', {
-            body: { deviceId: device.id },
-          });
-          
-          if (fnError) {
-            console.warn('Edge function error:', fnError);
+          // Get current session for auth header
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            console.warn('No session available for edge function call');
           } else {
-            qrCode = codes?.qrCode ?? null;
-            pairingCode = codes?.pairingCode ?? null;
-            
-            // Debug logging
-            if (pairingCode) {
-              console.log('📱 Pairing code received:', pairingCode);
-            }
-            if (qrCode) {
-              console.log('📷 QR code received: [data URL]');
+            const { data: codes, error: fnError } = await supabase.functions.invoke('get-device-qr', {
+              body: { deviceId: device.id },
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+              },
+            });
+
+            if (fnError) {
+              console.error('Edge function error:', fnError);
+              console.error('Error details:', JSON.stringify(fnError, null, 2));
+            } else if (codes) {
+              qrCode = codes?.qrCode ?? null;
+              pairingCode = codes?.pairingCode ?? null;
+
+              // Debug logging
+              if (pairingCode) {
+                console.log('📱 Pairing code received:', pairingCode);
+              }
+              if (qrCode) {
+                console.log('📷 QR code received: [data URL]');
+              }
+            } else {
+              console.warn('Edge function returned no data');
             }
           }
         } catch (fnErr) {
-          // Non-fatal: just log
-          console.debug('get-device-qr error (non-fatal):', fnErr);
+          // Non-fatal: just log with more details
+          console.error('get-device-qr exception:', fnErr);
         }
 
         if (row) {
