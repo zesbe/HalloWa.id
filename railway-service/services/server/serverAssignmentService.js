@@ -431,7 +431,7 @@ class ServerAssignmentService {
         return null;
       }
 
-      // Check if device is already assigned
+      // If already assigned, just return current assignment
       if (device.assigned_server_id) {
         return device.assigned_server_id;
       }
@@ -441,60 +441,70 @@ class ServerAssignmentService {
         deviceName: device.device_name
       });
 
-      // Get best available server based on load
+      // Determine target server based on load (fall back to current server)
       const bestServerId = await this.getBestAvailableServer();
+      const targetServerId = bestServerId || this.serverId;
+      const now = new Date().toISOString();
 
-      if (!bestServerId) {
-        logger.warn('⚠️ No available servers for assignment - assigning to current', {
+      // ⚖️ ATOMIC ASSIGNMENT: only assign if still unassigned
+      const { data: assignResult, error: assignError } = await supabase
+        .from('devices')
+        .update({
+          assigned_server_id: targetServerId,
+          updated_at: now
+        })
+        .eq('id', device.id)
+        .is('assigned_server_id', null)
+        .select('assigned_server_id')
+        .maybeSingle();
+
+      if (assignError) {
+        logger.error('❌ Failed atomic device assignment', {
+          deviceId: device.id,
+          error: assignError.message
+        });
+        return null;
+      }
+
+      if (assignResult && assignResult.assigned_server_id) {
+        // This server won the race (or another picked via bestServerId)
+        logger.info('✅ Device assigned via atomic update', {
+          deviceId: device.id,
+          assignedTo: assignResult.assigned_server_id,
+          isThisServer: assignResult.assigned_server_id === this.serverId
+        });
+        return assignResult.assigned_server_id;
+      }
+
+      // If no row was updated, another server likely assigned it first
+      const { data: current, error: fetchError } = await supabase
+        .from('devices')
+        .select('assigned_server_id')
+        .eq('id', device.id)
+        .maybeSingle();
+
+      if (fetchError) {
+        logger.error('❌ Failed to fetch device assignment after race', {
+          deviceId: device.id,
+          error: fetchError.message
+        });
+        return null;
+      }
+
+      if (!current || !current.assigned_server_id) {
+        logger.warn('⚠️ Device still unassigned after atomic attempt', {
           deviceId: device.id
         });
-        // Fallback: assign to current server
-        const success = await this.assignDeviceToCurrentServer(device.id, device.user_id);
-        return success ? this.serverId : null;
+        return null;
       }
 
-      // If this server is the best choice, assign to it
-      if (bestServerId === this.serverId) {
-        logger.info('✅ This server selected as best - assigning device', {
-          deviceId: device.id,
-          serverId: this.serverId
-        });
-        const success = await this.assignDeviceToCurrentServer(device.id, device.user_id);
-        return success ? this.serverId : null;
-      }
-
-      // 🔧 FIX: Instead of assigning to another server and skipping,
-      // assign to THIS server with BEST SERVER as backup preference
-      // This ensures QR code is generated immediately, and load balancing
-      // can happen later through reconnection or migration
-      
-      logger.info('⚡ Another server has better capacity, but assigning to current server for immediate connection', {
+      logger.info('ℹ️ Device already assigned by another server', {
         deviceId: device.id,
-        preferredServer: bestServerId,
-        currentServer: this.serverId,
-        reason: 'prevent_qr_generation_delay'
+        assignedTo: current.assigned_server_id,
+        isThisServer: current.assigned_server_id === this.serverId
       });
 
-      // Assign to current server (immediate)
-      const success = await this.assignDeviceToCurrentServer(device.id, device.user_id);
-      
-      // Store preferred server in metadata for future optimization
-      if (success) {
-        await supabase
-          .from('devices')
-          .update({
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', device.id);
-          
-        logger.info('✅ Device assigned to current server (preferred: other server)', {
-          deviceId: device.id,
-          assignedTo: this.serverId,
-          preferredServer: bestServerId
-        });
-      }
-      
-      return success ? this.serverId : null;
+      return current.assigned_server_id;
 
     } catch (error) {
       logger.error('❌ Failed to auto-assign device', {
