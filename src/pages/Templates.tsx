@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, FileText, Trash2, Copy, Send } from "lucide-react";
+import { Plus, FileText, Trash2, Copy, Send, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ export const Templates = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     content: "",
@@ -57,22 +58,47 @@ export const Templates = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const { error } = await supabase.from("message_templates").insert({
-        user_id: user.id,
-        name: formData.name,
-        content: formData.content,
-        media_url: formData.media_url || null,
-      });
+      if (editingTemplate) {
+        const { error } = await supabase
+          .from("message_templates")
+          .update({
+            name: formData.name,
+            content: formData.content,
+            media_url: formData.media_url || null,
+          })
+          .eq("id", editingTemplate.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Template berhasil diupdate");
+      } else {
+        const { error } = await supabase.from("message_templates").insert({
+          user_id: user.id,
+          name: formData.name,
+          content: formData.content,
+          media_url: formData.media_url || null,
+        });
 
-      toast.success("Template berhasil dibuat");
+        if (error) throw error;
+        toast.success("Template berhasil dibuat");
+      }
+
       setDialogOpen(false);
+      setEditingTemplate(null);
       setFormData({ name: "", content: "", media_url: "" });
       fetchTemplates();
     } catch (error: any) {
       toast.error(error.message);
     }
+  };
+
+  const handleEdit = (template: Template) => {
+    setEditingTemplate(template);
+    setFormData({
+      name: template.name,
+      content: template.content,
+      media_url: template.media_url || "",
+    });
+    setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -110,7 +136,13 @@ export const Templates = () => {
               Simpan template pesan untuk digunakan kembali
             </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) {
+              setEditingTemplate(null);
+              setFormData({ name: "", content: "", media_url: "" });
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-primary to-secondary text-white w-full">
                 <Plus className="w-4 h-4 mr-2" />
@@ -119,9 +151,9 @@ export const Templates = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Buat Template Baru</DialogTitle>
+                <DialogTitle>{editingTemplate ? "Edit Template" : "Buat Template Baru"}</DialogTitle>
                 <DialogDescription>
-                  Simpan pesan yang sering digunakan sebagai template
+                  {editingTemplate ? "Update template pesan Anda" : "Simpan pesan yang sering digunakan sebagai template"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
@@ -192,7 +224,16 @@ export const Templates = () => {
                     <Send className="w-4 h-4 mr-2" />
                     Gunakan Template
                   </Button>
-                  <div className="flex gap-2">
+                <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleEdit(template)}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
                     <Button
                       onClick={() => handleCopy(template.content)}
                       variant="outline"
