@@ -600,24 +600,14 @@ export const Broadcast = () => {
                 Buat Broadcast Baru
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <DialogHeader className="flex-1">
-                  <DialogTitle>Buat Broadcast Baru</DialogTitle>
-                  <DialogDescription>
-                    Kirim pesan ke multiple kontak sekaligus dengan preview real-time
-                  </DialogDescription>
-                </DialogHeader>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setDialogOpen(false)}
-                  className="h-8 w-8 rounded-full hover:bg-accent flex-shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+            <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+              <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
+                <DialogTitle>Buat Broadcast Baru</DialogTitle>
+                <DialogDescription>
+                  Kirim pesan ke multiple kontak sekaligus dengan preview real-time
+                </DialogDescription>
+              </DialogHeader>
+              <div className="overflow-y-auto flex-1 pr-2">
               <form onSubmit={handleCreate}>
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Form Section */}
@@ -814,13 +804,13 @@ export const Broadcast = () => {
                             id="delay"
                             type="range"
                             min="2"
-                            max="30"
+                            max="300"
                             value={formData.delay_seconds}
                             onChange={(e) => setFormData({ ...formData, delay_seconds: parseInt(e.target.value) })}
                             className="w-full"
                           />
                           <p className="text-xs text-muted-foreground">
-                            Minimal 2 detik, maksimal 30 detik
+                            Minimal 2 detik, maksimal 300 detik (5 menit)
                           </p>
                         </div>
                       )}
@@ -935,6 +925,7 @@ export const Broadcast = () => {
                   </div>
                 </div>
               </form>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
